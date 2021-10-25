@@ -63,3 +63,24 @@ installs/configures the virtual box guest tools on it.
 It then proceeds to install/configure the domino server [need more detail here
 from someone familiar with this process].
 
+How to start Domino
+-------------------
+
+```
+run vagrant_ssh.sh
+```
+
+```
+sudo su
+su - domino
+/opt/hcl/domino/bin/server
+```
+
+```
+http://localhost:8080/names.nsf
+```
+
+Credentials
+-----------
+* username: Demo Admin
+* password: password
