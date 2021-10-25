@@ -451,7 +451,7 @@ Vagrant.configure("2") do |config|
 
 
   # to make Domino http work (http://localhost)
-  config.vm.network "forwarded_port", guest: 80, host: 80
+  config.vm.network "forwarded_port", guest: 80, host: 8080
   # notes port
   config.vm.network "forwarded_port", guest: 1352, host: 1352
 
