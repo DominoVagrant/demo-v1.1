@@ -1,0 +1,143 @@
+{
+	"serverSetup": {
+		"server": {
+			"type": "first",
+			"name": "demo",
+			"domainName": "IDP",
+			"title": "IDP Demo Server",
+			"password": null,
+			"minPasswordLength": 0,
+                        "serverTasks": "HTTP"
+		},
+		"network": {
+			"hostName": "domino.idp-demo.com",
+			"enablePortEncryption": true,
+			"enablePortCompression": true
+		},
+		"org": {
+			"countryCode": null,
+			"orgName": "IDP",
+			"certifierPassword": "password",
+			"orgUnitName": null,
+			"orgUnitPassword": null
+		},
+		"admin": {
+			"firstName": "IDP-Demo",
+			"middleName": null,
+			"lastName": "Admin",
+			"password": "password",
+			"IDFilePath":  "/local/dominodata/idp-demo-user.id"
+		},
+		"notesINI": {
+			"ServerTasks": null,
+			"LOG_REPLICATION": "1",
+			"LOG_SESSIONS": "1",
+			"JAVAUSERCLASSES": "DbSigner.jar"
+		},
+		"security": {
+			"ACL": {
+				"prohibitAnonymousAccess": true,
+				"addLocalDomainAdmins": true
+			}
+		},
+		"autoRegister": {
+			"count": 7,
+			"IDPath": "/local/dominodata/ids",
+			"pattern": "server#"
+		}
+	},
+
+	"IDVault": {
+		"name": "O=IDPDemoVault",
+		"description": "IDP Demo Vault",
+		"IDFile": "IDPDemoIDVault.id",
+		"IDPassword": "VaultPassword",
+		"path": "IBM_ID_VAULT/IDEPDemoIDVault.nsf",
+		"passwordReset": {
+			"helpText": "Call so and so for help resetting password"
+		},
+		"securitySettingsPolicy": {
+			"name": "IDP Demo Vault Security Settings Policy",
+			"description": "IDP Demo Vault Security Settings"
+		},
+		"masterPolicy": {
+			"description": "IDP Demo Vault Master Policy Description"
+		}
+	},
+
+	"appConfiguration": {
+		"databases": [
+		  {
+			"filePath": "names.nsf",
+			"action": "update",
+			"documents": [
+			  {
+				"action": "update",
+				"findDocument": {
+				  "Type": "Server",
+				  "ServerName": "CN=demo/O=IDP"
+				},
+				"items": {
+				  "FullAdmin": "LocalDomainAdmins",
+				  "CreateAccess": "LocalDomainAdmins",
+				  "ReplicaAccess": "LocalDomainAdmins",
+				  "UnrestrictedList": "LocalDomainAdmins",
+				  "OnBehalfOfLst": "LocalDomainAdmins",
+				  "RestrictedList": "LocalDomainAdmins",
+				  "HTTP_EnableSessionAuth": "1"
+				}
+			  },
+			  {
+				"action": "update",
+				"findDocument": {
+				  "Type": "Person",
+				  "FirstName": "IDP-Demo",
+				  "LastName": "Admin"
+				},
+				"items": {
+				  "InternetAddress": "idp.admin@admin.com",
+				  "OfficePhoneNumber": "1234567890",
+				  "PhoneNumber": "555-666-777",
+				  "State": "IL",
+				  "Title": "Mr.",
+				  "initials": "IA",
+				  "employeeType": "consultant"
+				}
+			  },
+			  {
+				"action": "create",
+				"computeWithForm": true,
+				"items": {
+				  "Form": "Program",
+				  "CmdLine": "DbSigner",
+				  "Enabled": "2",
+				  "Program": "runjava",
+				  "Source": "CN=demo/O=IDP"
+				}
+			  }
+			]
+		  },
+		  {
+			"action": "create",
+			"filePath": "domcfg.nsf",
+			"title": "Domino Web Server Configuration",
+			"templatePath": "domcfg5.ntf",
+			"signUsingAdminp": true,
+	
+			"documents": [
+			  {
+				"action": "create",
+				"items": {
+				  "Form": "LoginMap",
+				  "LF_LoginForm": "Login",
+				  "LF_LoginFormDB": "mfa.nsf",
+				  "LF_ServerType": "0",
+				  "LF_IP": "",
+				  "$PublicAccess": "1"
+				}
+			  }
+			]
+		  }
+		]
+	  }
+}
