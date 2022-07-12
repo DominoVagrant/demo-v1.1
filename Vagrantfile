@@ -17,7 +17,6 @@ VAGRANT_SHARED = "./vagrant_cached_domino_mfa_files" # create a symlink with:  l
 
 # The the path for the Notes ID to use for the new VM for the purpose of stand-alone Java application use
 # This file will be copied to /local/notesjava/user.id
-# fresh server ID
 NOTES_ID = "./dist-id-files/SOME_NOTES_ID_OF_YOURS_THAT_YOU_WANT_INSIDE_THE_VM.id"
 
 # Select Domino Install
@@ -488,7 +487,7 @@ Vagrant.configure("2") do |config|
     ]
 
   # update the configuration file for this server's capabilities
-  config.vm.provision "shell", inline: "cp /vagrant/dist-support/rest_config.yml REST_CONFIG_FILE"
+  config.vm.provision "shell", inline: "cp /vagrant/dist-support/rest_config.yml #{REST_CONFIG_FILE}"
 
   config.vm.provision "shell",
     inline: "/bin/sh /home/vagrant/rest/always.sh $1 $2 $3 $4",
