@@ -5,3 +5,5 @@
 .vagrant
 
 /dist-id-files/*.id
+
+*.swp

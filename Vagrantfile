@@ -17,8 +17,8 @@ VAGRANT_SHARED = "./vagrant_cached_domino_mfa_files" # create a symlink with:  l
 
 # The the path for the Notes ID to use for the new VM for the purpose of stand-alone Java application use
 # This file will be copied to /local/notesjava/user.id
+# fresh server ID
 NOTES_ID = "./dist-id-files/SOME_NOTES_ID_OF_YOURS_THAT_YOU_WANT_INSIDE_THE_VM.id"
-
 
 # Select Domino Install
 # Choose 0 for the base Domino server install only.
@@ -34,7 +34,7 @@ DOMINO_INSTALLER_PATH = "#{VAGRANT_SHARED}"
 
 
 # The name of the Domino server installer.  This is expected to match the name of the file on downloads.prominic.net
-DOMINO_SERVER_INSTALLER_TAR = "Domino_12.0_Linux_English.tar"
+DOMINO_SERVER_INSTALLER_TAR = "Domino_12.0.1_Linux_English.tar"
 
 
 # The local path for the Domino server installer tar.  Download from https://downloads.prominic.net/ND12/Domino_12.0_Linux_English.tar
@@ -90,6 +90,12 @@ DOMINO_SERVER_INSTALL_CONFIG = "./dist-support/installer.properties"
 # Read the password from the user
 #require_relative "user_input.rb"
 #NOTES_ID_PASSWORD ||= NotesPassword.new.to_s
+
+# REST-Interface properties:
+REST_HOST_PORT=8096
+REST_GUEST_PORT=8080
+REST_APP_HOME_DIR="/opt/rest-interface"
+REST_CONFIG_FILE="#{REST_APP_HOME_DIR}/config/application.yml"
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
@@ -454,6 +460,46 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 80, host: 8080
   # notes port
   config.vm.network "forwarded_port", guest: 1352, host: 1352
+
+  # REST interface
+  config.vm.network "forwarded_port",
+    guest: REST_GUEST_PORT,
+    host: REST_HOST_PORT,
+    host_ip: "127.0.0.1"
+
+
+  # install REST interface
+  config.vm.provision "shell", name:"Pull scripts for REST interface", privileged:true, inline: <<-SHELL
+    # These libraries could be moved or removed by the user if they were already covered
+    yum install -y wget
+    yum install -y unzip
+    wget https://github.com/Moonshine-IDE/Vagrant-REST-Interface/releases/download/0.1.6/VagrantCRUD_centos7.zip
+
+    unzip -d rest VagrantCRUD_centos7.zip
+    mv rest/rest-interface-*.jar rest/rest-interface.jar
+    chmod +x -R rest/
+  SHELL
+
+  config.vm.provision "shell",
+    inline: "/bin/sh /home/vagrant/rest/provision.sh $1",
+    privileged: true,
+    args: [
+      REST_APP_HOME_DIR
+    ]
+
+  # update the configuration file for this server's capabilities
+  config.vm.provision "shell", inline: "cp /vagrant/dist-support/rest_config.yml REST_CONFIG_FILE"
+
+  config.vm.provision "shell",
+    inline: "/bin/sh /home/vagrant/rest/always.sh $1 $2 $3 $4",
+    privileged: false,
+    run: "always",
+    args: [
+      REST_GUEST_PORT,
+      REST_APP_HOME_DIR,
+      REST_HOST_PORT,
+      REST_CONFIG_FILE
+    ]
 
   # Output a list of actions the user can run.  Run this last!
   config.vm.provision "shell",inline: "cat /home/vagrant/dist-support/CommandHelp.txt" , run:"always" 

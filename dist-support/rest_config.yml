@@ -1,0 +1,4 @@
+restinterface:
+    capabilities:
+        - domino-api
+        - domino-server
