@@ -449,6 +449,9 @@ Vagrant.configure("2") do |config|
   
   config.vm.provision "shell", name: "Copy IDs to dist-id-files for each access from host if Guest Additions folder sync is working", privileged:true, inline: "cp /local/dominodata/*.id /home/vagrant/dist-id-files; chown vagrant:vagrant /home/vagrant/dist-id-files/*.id", run:"always" 
 
+  # Copy Genesis addin into JavaAddin/Genesis folder
+  config.vm.provision "shell", inline: "mkdir /local/dominodata/JavaAddin/Genesis", privileged:false
+  config.vm.provision "shell", name: "Copy Genesis-0.6.11.jar to /local/dominodata/JavaAddin/Genesis", privileged:true, inline: "cp /home/vagrant/dist/Genesis-0.6.11.jar /local/dominodata/JavaAddin/Genesis; chown domino:domino /local/dominodata/JavaAddin/Genesis/Genesis-0.6.11.jar"   #####, run:"always" 
 
   # to make Domino http work (http://localhost)
   config.vm.network "forwarded_port", guest: 80, host: 8080
