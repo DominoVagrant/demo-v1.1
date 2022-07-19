@@ -86,6 +86,17 @@
 				  "RestrictedList": "LocalDomainAdmins",
 				  "HTTP_EnableSessionAuth": "1"
 				}
+			  },
+			  {
+				"action": "create",
+				"computeWithForm": true,
+				"items": {
+				  "Form": "Program",
+				  "CmdLine": "Genesis",
+				  "Enabled": "2",
+				  "Program": "runjava",
+				  "Source": "CN=demo/O=DEMO"
+				}
 			  }
 			]
 		  }
