@@ -32,7 +32,8 @@
 			"ServerTasks": null,
 			"LOG_REPLICATION": "1",
 			"LOG_SESSIONS": "1",
-			"JAVAUSERCLASSES": "DbSigner.jar"
+			"JavaUserClassesExt":"GJA_Genesis",
+			"GJA_Genesis": "JavaAddin/Genesis/Genesis-0.6.14.jar"
 		},
 		"security": {
 			"ACL": {
