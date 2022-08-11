@@ -15,9 +15,14 @@
 VAGRANT_SHARED = "./vagrant_cached_domino_mfa_files" # create a symlink with:  ln -s ~/DropBox/Vagrant/DominoServerMFACachedInstallers-Shibboleth/ ./vagrant_cached_domino_mfa_files 
 
 
-# The the path for the Notes ID to use for the new VM for the purpose of stand-alone Java application use
+# This ID will be cross-certified for the new server.
+# This should be a safe ID, so that the real ID doesn't need to be copied.  TODO:  this logic is not yet implemented
+# To create a safe ID from a Notes client:
+# 1. Open HCL Notes > Security > User Security
+# 2. Select the Your Identity > Your Certificates tab
+# 3. Run Other Actions > Export NotesID Safe ID
 # This file will be copied to /local/notesjava/user.id
-NOTES_ID = "./dist-id-files/SOME_NOTES_ID_OF_YOURS_THAT_YOU_WANT_INSIDE_THE_VM.id"
+SAFE_NOTES_ID = "./dist-id-files/safe.ids"
 
 
 # Select Domino Install
@@ -34,7 +39,7 @@ DOMINO_INSTALLER_PATH = "#{VAGRANT_SHARED}"
 
 
 # The name of the Domino server installer.  This is expected to match the name of the file on downloads.prominic.net
-DOMINO_SERVER_INSTALLER_TAR = "Domino_12.0_Linux_English.tar"
+DOMINO_SERVER_INSTALLER_TAR = "Domino_12.0.1_Linux_English.tar"
 
 
 # The local path for the Domino server installer tar.  Download from https://downloads.prominic.net/ND12/Domino_12.0_Linux_English.tar
@@ -244,7 +249,7 @@ Vagrant.configure("2") do |config|
       # download from remote source
       config.vm.provision "shell",
        # name:  "Download Domino installer.",
-        inline:  "wget \"https://downloads.prominic.net/ND9/#{DOMINO_SERVER_INSTALLER_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_INSTALLER_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
+        inline:  "wget \"https://downloads.prominic.net/ND12/#{DOMINO_SERVER_INSTALLER_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_INSTALLER_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
         privileged: false
   end
 
@@ -263,7 +268,7 @@ Vagrant.configure("2") do |config|
         # TODO: update this for Domino 11
         config.vm.provision "shell",
          # name:  "Download Domino installer.",
-          inline:  "wget \"https://downloads.prominic.net/ND9/#{DOMINO_SERVER_FIXPACK_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_FIXPACK_TAR} --user downloads@prominic.net --password XXXXXXXX --progress=dot:mega",
+          inline:  "wget \"https://downloads.prominic.net/ND12/#{DOMINO_SERVER_FIXPACK_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_FIXPACK_TAR} --user downloads@prominic.net --password XXXXXXXX --progress=dot:mega",
           privileged: false
     end
   end
@@ -284,7 +289,7 @@ Vagrant.configure("2") do |config|
         # TODO: update this for Domino 11
         config.vm.provision "shell",
          # name:  "Download Domino installer.",
-          inline:  "wget \"https://downloads.prominic.net/ND9/#{DOMINO_SERVER_HOTFIX_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_HOTFIX_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
+          inline:  "wget \"https://downloads.prominic.net/ND12/#{DOMINO_SERVER_HOTFIX_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_HOTFIX_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
           privileged: false
     end
   end
@@ -382,7 +387,9 @@ Vagrant.configure("2") do |config|
     
   
   ## Deploy Notes ID
-  config.vm.provision "file", source: "#{NOTES_ID}", destination: "/local/notesjava/dist-support-user.id", run:"always"
+  if File.exist?(SAFE_NOTES_ID)
+    config.vm.provision "file", source: "#{SAFE_NOTES_ID}", destination: "/local/notesjava/dist-support-user.id", run:"always"
+  end
   
   
   ## Copy templates necessary for standalone Notes Java app 
@@ -437,6 +444,7 @@ Vagrant.configure("2") do |config|
   # Configure Domino server in silent mode.  This must run as root
   config.vm.provision "shell", name: "Copy setup.json to dest", privileged:true, inline: "cp /home/vagrant/dist-support/setup.json /local/dominodata; chown domino:domino /local/dominodata/setup.json"   #####, run:"always" 
   config.vm.provision "shell", name: "Configure Domino server", privileged:false, inline: "sudo -E su - domino -c \"cd /local/dominodata; pwd; whoami; /opt/hcl/domino/bin/server -autoconf ./setup.json\""   #####, run:"always" 
+  config.vm.provision "shell", name: "Add server to /etc/hosts", privileged:true, inline: "printf '\\n127.0.0.1 demo\\n' >> /etc/hosts"   #####, run:"always" 
   config.vm.provision "shell",                                                   inline: "echo 'Domino automated setup complete'; date"   #####, run:"always" 
 
   config.vm.provision "shell",inline: "cat /local/dominodata/IBM_TECHNICAL_SUPPORT/autoconfigure.log" #####, run:"always"
