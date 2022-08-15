@@ -451,12 +451,23 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: "mkdir /home/vagrant/dist-id-files", privileged:false
   
   config.vm.provision "shell", name: "Copy IDs to dist-id-files for each access from host if Guest Additions folder sync is working", privileged:true, inline: "cp /local/dominodata/*.id /home/vagrant/dist-id-files; chown vagrant:vagrant /home/vagrant/dist-id-files/*.id", run:"always" 
+
+  # Copy Genesis addin into JavaAddin/Genesis folder
+  config.vm.provision "shell", inline: "mkdir -p /local/dominodata/JavaAddin/Genesis", privileged:true #####, run:"always"
+  config.vm.provision "shell", privileged:true, inline: "chown -R domino:domino /local/dominodata/JavaAddin" #####, run:"always" 
+  config.vm.provision "shell", name: "Copy Genesis-0.6.14.jar to /local/dominodata/JavaAddin/Genesis", privileged:true, inline: "cp /home/vagrant/dist/Genesis-0.6.14.jar /local/dominodata/JavaAddin/Genesis; chown domino:domino /local/dominodata/JavaAddin/Genesis/Genesis-0.6.14.jar" #####, run:"always"
+
+  # Start the Domino server
+  config.vm.provision "shell", name: "Start Domino server in screen", run: "always", path: "./dist-support/StartDomino.sh"
     
   
   ## Cross-certify the safe ID, if provided
   if File.exist?(SAFE_NOTES_ID)
-    config.vm.provision "file", source: "#{SAFE_NOTES_ID}", destination: "/local/notesjava/safe.ids", run:"always"
-    config.vm.provision "shell", name: "Cross-certify provided safe ID", run: "always", inline: <<-SHELL
+    config.vm.provision "file", source: "#{SAFE_NOTES_ID}", destination: "/local/notesjava/safe.ids", run:"once"
+    config.vm.provision "shell", name: "Cross-certify provided safe ID", run: "once", inline: <<-SHELL
+      echo "Waiting for server to start..."  # TODO:  make a better check for this.
+      sleep 60
+      
       source /home/vagrant/.bashrc # load Java installation
       source /home/vagrant/.bash_profile  # load LD_LIBRARY_PATH
       cd /local/notesjava
@@ -467,41 +478,6 @@ Vagrant.configure("2") do |config|
       sudo su -c "yes \"`jq -r '.serverSetup | .admin | .password' /local/dominodata/setup.json`\" | $JAVA_HOME/bin/java -jar /vagrant/build/libs/CrossCertifyNotesID.jar safe.ids" - vagrant
     SHELL
   end
-
-  # Copy Genesis addin into JavaAddin/Genesis folder
-  config.vm.provision "shell", inline: "mkdir -p /local/dominodata/JavaAddin/Genesis", privileged:true #####, run:"always"
-  config.vm.provision "shell", privileged:true, inline: "chown -R domino:domino /local/dominodata/JavaAddin" #####, run:"always" 
-  config.vm.provision "shell", name: "Copy Genesis-0.6.14.jar to /local/dominodata/JavaAddin/Genesis", privileged:true, inline: "cp /home/vagrant/dist/Genesis-0.6.14.jar /local/dominodata/JavaAddin/Genesis; chown domino:domino /local/dominodata/JavaAddin/Genesis/Genesis-0.6.14.jar" #####, run:"always"
-
-  # Start the Domino server
-  config.vm.provision "shell", name: "Start Domino server in screen", run: "always", inline: <<-SHELL
-    if (ps -ef | grep -v grep | grep 'domino/bin/server'); then  # server is running
-      echo "Domino server is already running."
-    else
-      TIMESTAMP=`date +%Y%m%d%H%M%S`
-      DOMINO_LOG_DIR=/local/dominodata/dominolog
-      DOMINO_LOG_FILE=$DOMINO_LOG_DIR/server_${TIMESTAMP}.log
-      DOMINO_INPUT_FILE=$DOMINO_LOG_DIR/domino.input
-      
-      # Prepare input and output
-      # We could change the permissions on the log directory if desired, but I felt it was better to use the same permissions as the Domino server
-      sudo mkdir -p "$DOMINO_LOG_DIR"
-      sudo rm -f "$DOMINO_INPUT_FILE"  # clear any existing commands
-      sudo touch "$DOMINO_INPUT_FILE"
-      sudo chown -R domino.domino "$DOMINO_LOG_DIR"
-      
-      # nohup - prevent command from hangcing on prompts
-      # -d -m - Start screen in detatched mode
-      # -L - automatic output logging
-      # Add this option after "server" to allow commands to be sent programatically (breaks screen console):  < \"$DOMINO_INPUT_FILE\"
-      nohup screen -d -m bash -c "sudo su -c '/opt/hcl/domino/bin/server  | tee $DOMINO_LOG_FILE' - domino"
-      echo ""
-      echo "#### Domino server started in screen.  It may take a couple minutes to fully start"
-      echo "## Run "screen -r" to see the server console"
-      echo "## Domino server output written to $DOMINO_LOG_FILE"
-      #echo "## Run server command from 'screen -r' or with:  sudo su -c 'echo \"show server\" >> /local/dominodata/dominolog/domino.input' - domino"
-    fi
-  SHELL
   
   
   
