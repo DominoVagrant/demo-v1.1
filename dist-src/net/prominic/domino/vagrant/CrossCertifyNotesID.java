@@ -109,9 +109,12 @@ public class CrossCertifyNotesID
 						
 			DateTime dt = session.createDateTime("Today");
 			dt.setNow();
-			dt.adjustYear(1);
-			 
+			dt.adjustYear(1);	 
 			reg.setExpiration(dt);
+			
+			// NOTE:  crossCertify triggers a password check even with an authenticated session, if the ID file has a password
+			// I see this behavior is specifically noted for the recertify method, but not crossCertify:  https://help.hcltechsw.com/dom_designer/12.0.0/basic/H_RECERTIFY_METHOD_JAVA.html
+			// Enter the password from the command prompt, or automate it using the "yes" command
 			if (reg.crossCertify(targetID, 
 				certPassword, // certifier password
 				"programmatically cross certified")) // comment field

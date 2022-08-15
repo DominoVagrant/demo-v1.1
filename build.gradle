@@ -141,7 +141,7 @@ new File(jarIndividualDir).eachFileRecurse groovy.io.FileType.FILES, {File curFi
 			String curTaskName = "jar$mainClass"
 			// don't override the existing task if it exists - allow this so that the user can define a custom override
 			if (!tasks.findByName(curTaskName)) {
-				println "Creating JAR:  '${mainClass}.jar'"
+				println "Creating task:  '$curTaskName'"
 				tasks.create(name: curTaskName, type: Jar) {
 					archiveName = "${mainClass}.jar"
 					manifest {
