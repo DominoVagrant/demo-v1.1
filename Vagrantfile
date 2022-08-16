@@ -15,9 +15,14 @@
 VAGRANT_SHARED = "./vagrant_cached_domino_mfa_files" # create a symlink with:  ln -s ~/DropBox/Vagrant/DominoServerMFACachedInstallers-Shibboleth/ ./vagrant_cached_domino_mfa_files 
 
 
-# The the path for the Notes ID to use for the new VM for the purpose of stand-alone Java application use
+# This ID will be cross-certified for the new server.
+# This should be a safe ID, so that the real ID doesn't need to be copied.  TODO:  this logic is not yet implemented
+# To create a safe ID from a Notes client:
+# 1. Open HCL Notes > Security > User Security
+# 2. Select the Your Identity > Your Certificates tab
+# 3. Run Other Actions > Export NotesID Safe ID
 # This file will be copied to /local/notesjava/user.id
-NOTES_ID = "./dist-id-files/SOME_NOTES_ID_OF_YOURS_THAT_YOU_WANT_INSIDE_THE_VM.id"
+SAFE_NOTES_ID = "./dist-id-files/safe.ids"
 
 # Select Domino Install
 # Choose 0 for the base Domino server install only.
@@ -138,13 +143,11 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |vb|
      # Display the VirtualBox GUI when booting the machine
      # I have disabled this by default, because the GUI won't load properly until ubuntu-desktop is installed
-     #vb.gui = true
+     vb.gui = true
   
      # Customize the amount of memory on the VM:
      vb.memory = "4096"
   end
-  
-  
   
   config.vm.provision "shell", name: "Upgrade Linux so VirtualBox Guest Additions will install", privileged:true, inline: "yum -y upgrade" 
   
@@ -235,6 +238,8 @@ Vagrant.configure("2") do |config|
 	yum -y install mc
 	# For conveninece of starting Domino and keeping it persistent (without Jedi)
 	yum -y install screen
+	# JSON parsing for cross-certify
+	yum -y install jq
   SHELL
 
   ## Upload Domino server installer(s)
@@ -251,7 +256,7 @@ Vagrant.configure("2") do |config|
       # download from remote source
       config.vm.provision "shell",
        # name:  "Download Domino installer.",
-        inline:  "wget \"https://downloads.prominic.net/ND9/#{DOMINO_SERVER_INSTALLER_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_INSTALLER_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
+        inline:  "wget \"https://downloads.prominic.net/ND12/#{DOMINO_SERVER_INSTALLER_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_INSTALLER_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
         privileged: false
   end
 
@@ -270,7 +275,7 @@ Vagrant.configure("2") do |config|
         # TODO: update this for Domino 11
         config.vm.provision "shell",
          # name:  "Download Domino installer.",
-          inline:  "wget \"https://downloads.prominic.net/ND9/#{DOMINO_SERVER_FIXPACK_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_FIXPACK_TAR} --user downloads@prominic.net --password XXXXXXXX --progress=dot:mega",
+          inline:  "wget \"https://downloads.prominic.net/ND12/#{DOMINO_SERVER_FIXPACK_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_FIXPACK_TAR} --user downloads@prominic.net --password XXXXXXXX --progress=dot:mega",
           privileged: false
     end
   end
@@ -291,7 +296,7 @@ Vagrant.configure("2") do |config|
         # TODO: update this for Domino 11
         config.vm.provision "shell",
          # name:  "Download Domino installer.",
-          inline:  "wget \"https://downloads.prominic.net/ND9/#{DOMINO_SERVER_HOTFIX_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_HOTFIX_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
+          inline:  "wget \"https://downloads.prominic.net/ND12/#{DOMINO_SERVER_HOTFIX_TAR}\" --output-document=/home/vagrant/#{DOMINO_SERVER_HOTFIX_TAR} --user downloads@prominic.net --password XXXXXXX --progress=dot:mega",
           privileged: false
     end
   end
@@ -386,10 +391,7 @@ Vagrant.configure("2") do |config|
   
   ## Copy distribution files to /local/notesjava
   config.vm.provision "shell", name: "Copy dist JARs to NotesJava", privileged:true, inline: "cp /home/vagrant/dist/*.jar /local/notesjava/", run:"always"
-    
-  
-  ## Deploy Notes ID
-  config.vm.provision "file", source: "#{NOTES_ID}", destination: "/local/notesjava/dist-support-user.id", run:"always"
+
   
   
   ## Copy templates necessary for standalone Notes Java app 
@@ -444,6 +446,7 @@ Vagrant.configure("2") do |config|
   # Configure Domino server in silent mode.  This must run as root
   config.vm.provision "shell", name: "Copy setup.json to dest", privileged:true, inline: "cp /home/vagrant/dist-support/setup.json /local/dominodata; chown domino:domino /local/dominodata/setup.json"   #####, run:"always" 
   config.vm.provision "shell", name: "Configure Domino server", privileged:false, inline: "sudo -E su - domino -c \"cd /local/dominodata; pwd; whoami; /opt/hcl/domino/bin/server -autoconf ./setup.json\""   #####, run:"always" 
+  config.vm.provision "shell", name: "Add server to /etc/hosts", privileged:true, inline: "printf '\\n127.0.0.1 demo\\n' >> /etc/hosts"   #####, run:"always" 
   config.vm.provision "shell",                                                   inline: "echo 'Domino automated setup complete'; date"   #####, run:"always" 
 
   config.vm.provision "shell",inline: "cat /local/dominodata/IBM_TECHNICAL_SUPPORT/autoconfigure.log" #####, run:"always"
@@ -454,7 +457,35 @@ Vagrant.configure("2") do |config|
   
   config.vm.provision "shell", name: "Copy IDs to dist-id-files for each access from host if Guest Additions folder sync is working", privileged:true, inline: "cp /local/dominodata/*.id /home/vagrant/dist-id-files; chown vagrant:vagrant /home/vagrant/dist-id-files/*.id", run:"always" 
 
+  # Copy Genesis addin into JavaAddin/Genesis folder
+  config.vm.provision "shell", inline: "mkdir -p /local/dominodata/JavaAddin/Genesis", privileged:true #####, run:"always"
+  config.vm.provision "shell", privileged:true, inline: "chown -R domino:domino /local/dominodata/JavaAddin" #####, run:"always" 
+  config.vm.provision "shell", name: "Copy Genesis-0.6.14.jar to /local/dominodata/JavaAddin/Genesis", privileged:true, inline: "cp /home/vagrant/dist/Genesis-0.6.14.jar /local/dominodata/JavaAddin/Genesis; chown domino:domino /local/dominodata/JavaAddin/Genesis/Genesis-0.6.14.jar" #####, run:"always"
 
+  # Start the Domino server
+  config.vm.provision "shell", name: "Start Domino server in screen", run: "always", path: "./dist-support/StartDomino.sh"
+    
+  
+  ## Cross-certify the safe ID, if provided
+  if File.exist?(SAFE_NOTES_ID)
+    config.vm.provision "file", source: "#{SAFE_NOTES_ID}", destination: "/local/notesjava/safe.ids", run:"once"
+    config.vm.provision "shell", name: "Cross-certify provided safe ID", run: "once", inline: <<-SHELL
+      echo "Waiting for server to start..."  # TODO:  make a better check for this.
+      sleep 60
+      
+      source /home/vagrant/.bashrc # load Java installation
+      source /home/vagrant/.bash_profile  # load LD_LIBRARY_PATH
+      cd /local/notesjava
+      # CrossCertyNotesID has a password prompt.  See class for details
+      # This 'yes' command will read the password from setup.json
+      # The password will be briefly visible in the running process list, but not in the command history
+      # Explicitly run as 'vagrant' to avoid "Error Code 493: Do not run as root."
+      sudo su -c "yes \"`jq -r '.serverSetup | .admin | .password' /local/dominodata/setup.json`\" | $JAVA_HOME/bin/java -jar /vagrant/build/libs/CrossCertifyNotesID.jar safe.ids" - vagrant
+    SHELL
+  end
+  
+  
+  
   # to make Domino http work (http://localhost)
   config.vm.network "forwarded_port", guest: 80, host: 8080
   # notes port

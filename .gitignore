@@ -1,9 +1,16 @@
 *.log
 
-/vagrant_cached_domino_mfa_files/*
+vagrant_cached_domino_mfa_files/
+vagrant_cached_domino_mfa_files
 
 .vagrant
 
-/dist-id-files/*.id
+dist-id-files/
 
+.DS_Store
 *.swp
+.classpath
+.project
+.settings/
+.gradle/
+build/

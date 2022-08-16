@@ -15,9 +15,9 @@ source "/home/vagrant/.sdkman/bin/sdkman-init.sh"
 # The old Java versions are constantly removed, so this is unreliable
 #yes | sdk install java 8.0.232-zulu 
 #sdk default java 8.0.232-zulu 
-# Get the latest AdoptOpenJDK
-LATEST_JDK=`sdk list java | grep "8.0.*.hs-adpt" | sed 's/^.*\(8.0.[0-9]\+.hs-adpt\)[ ]*$/\1/'`
-sdk install java $LATEST_JDK
+# Get the latest Azul/Zulu JDK
+LATEST_JDK=`sdk list java | grep " 8.0.*-zulu" | grep -v "fx-" | sed 's/^.*\(8.0.[0-9]\+-zulu\)[ ]*$/\1/' | head -n 1`
+yes | sdk install java $LATEST_JDK
 sdk default java $LATEST_JDK
 # Instead, use the Domino JVM - FAILED - triggers Segmentation fault
 #echo "" >> /home/vagrant/.bashrc
