@@ -1,0 +1,3 @@
+restinterface:
+    capabilities:
+        - upload-database
