@@ -1,0 +1,25 @@
+{
+    "title": "TEST JSON",
+    "versionjson": "1.0.0",
+
+    "steps": [
+    {
+        "title": "--- Step 1. Databases examples ---",
+        "databases": [
+             {
+                "action": "create",
+                "title": "BACKUP DOCS",
+                "filePath": "backupdocs4.nsf",
+                "templatePath": "c:\private\BackupDocs2.ntf",
+                "sign": true,
+                "replace": true
+              }
+        ]
+    },
+    {
+        "title": "--- Step 2 (final). Completed ---",
+        "messages": ["You have run test.json file successfully"]
+    }
+
+    ]
+}
