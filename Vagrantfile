@@ -517,9 +517,16 @@ Vagrant.configure("2") do |config|
       REST_APP_HOME_DIR
     ]
 
-  # update the configuration file for this server's capabilities
-  config.vm.provision "shell", inline: "cp /vagrant/dist-support/rest_config.yml #{REST_CONFIG_FILE}"
+  # update the scripts and configuration file for this server's capabilities
+  config.vm.provision "shell", privileged:true, run: "always", inline: <<-SHELL
+    cp /vagrant/dist-support/rest_config.yml #{REST_CONFIG_FILE}
+    mkdir -p /opt/domino/scripts
+    cp /vagrant/dist-support/rest_scripts/*.sh /opt/domino/scripts
+    chown -R vagrant.vagrant /opt/domino/scripts
+    chmod 744 /opt/domino/scripts/*.sh
+  SHELL
 
+  # Start the REST server
   config.vm.provision "shell",
     inline: "/bin/sh /home/vagrant/rest/always.sh $1 $2 $3 $4",
     privileged: false,

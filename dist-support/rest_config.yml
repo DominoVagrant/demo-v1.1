@@ -1,4 +1,3 @@
 restinterface:
     capabilities:
-        - domino-api
-        - domino-server
+        - upload-database
