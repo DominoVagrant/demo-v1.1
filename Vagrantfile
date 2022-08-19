@@ -457,6 +457,12 @@ Vagrant.configure("2") do |config|
   
   config.vm.provision "shell", name: "Copy IDs to dist-id-files for each access from host if Guest Additions folder sync is working", privileged:true, inline: "cp /local/dominodata/*.id /home/vagrant/dist-id-files; chown vagrant:vagrant /home/vagrant/dist-id-files/*.id", run:"always" 
 
+  # Build utility jars and deploy them to the required location
+  config.vm.provision "shell", name:  "Build helper Java applications", run: "always", inline: <<-SHELL
+    # Make sure to run as vagrant to use environment setup by SDKMAN
+    sudo su -c "cd /vagrant && gradle clean jarIndividual" - vagrant
+  SHELL
+  
   # Copy Genesis addin into JavaAddin/Genesis folder
   config.vm.provision "shell", inline: "mkdir -p /local/dominodata/JavaAddin/Genesis", privileged:true #####, run:"always"
   config.vm.provision "shell", privileged:true, inline: "chown -R domino:domino /local/dominodata/JavaAddin" #####, run:"always" 

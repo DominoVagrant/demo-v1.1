@@ -6,13 +6,18 @@ plugins {
     id 'application'  // allows 'run' task.
     id 'eclipse'      // allows dependencies to be exported to .classpath
 }
-mainClassName = 'CheckNotesUser['
+mainClassName = 'CheckNotesUser'
 
-String notesInstallation = '/Applications/HCL Notes.app/Contents/MacOS/'
+String notesInstallation = '/Applications/HCL Notes.app/Contents/MacOS'
 if (!notesInstallation) {
 	throw new GradleException("Missing configured path for Notes installation.  Set notesInstallation in build.gradle.")
 }
-else if (!(new File(notesInstallation).exists())) {
+if (!(new File(notesInstallation).exists())) {
+	// try this as a Linux environment instead
+	notesInstallation = '/opt/hcl/domino/notes/latest/linux'
+}
+// TODO:  try Windows
+if (!(new File(notesInstallation).exists())) {
 	throw new GradleException("Invalid configured path for Notes installation ($notesInstallation).  Check notesInstallation in build.gradle.")
 }
 

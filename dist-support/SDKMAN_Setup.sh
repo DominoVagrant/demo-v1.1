@@ -12,6 +12,10 @@ sudo yum -y install unzip
 curl -s "https://get.sdkman.io" | bash
 source "/home/vagrant/.sdkman/bin/sdkman-init.sh"
 
+# Install Gradle for local build commands.  Match the current Moonshine version
+sdk install gradle 5.4.1
+sdk default gradle 5.4.1
+
 # The old Java versions are constantly removed, so this is unreliable
 #yes | sdk install java 8.0.232-zulu 
 #sdk default java 8.0.232-zulu 
