@@ -111,7 +111,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "domino-vm"
   config.vm.hostname = "domino-vm.mydomain.com"
 
-  config.vm.network "public_network"
+  # This triggers a prompt for "Available bridged network interfaces", which breaks the Moonshine Vagrant > Up action.  We could specify an IP here, but this is specific to the local machine.
+  #config.vm.network "public_network"
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
