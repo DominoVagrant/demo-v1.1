@@ -110,3 +110,15 @@ Then you can open a database on the server like this:
 
 * username: Demo Admin
 * password: password
+
+
+
+## Common Problems
+
+### Error for Headless VirtualBox
+
+If you get an error indicating that VirtualBox could not start in headless mode, open Vagrantfile and uncomment this line
+
+```
+     #vb.gui = true
+```
