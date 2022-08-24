@@ -16,7 +16,8 @@ echo "Uploading database $TEMP_PATH to $DBNAME ($TITLE)"
 TIMESTAMP=`date +%Y%m%d%H%M%S`
 JSON_NAME=create_${TIMESTAMP}.json
 JSON_TMP=/tmp/${JSON_NAME}
-JSON_TRIGGER_FILE=/local/dominodata/JavaAddin/Genesis/json/$JSON_NAME
+JSON_TRIGGER_DIR=/local/dominodata/JavaAddin/Genesis/json
+JSON_TRIGGER_FILE=$JSON_TRIGGER_DIR/$JSON_NAME
 
 # Determine if the database should be overwritten
 FULL_TARGET_PATH=/local/dominodata/$DBNAME
@@ -53,6 +54,10 @@ EndOfMessage
 # update the permissions
 sudo chown domino.domino "$TEMP_PATH"
 sudo chown domino.domino $JSON_TMP
+
+# Make sure the Genesis directory exists
+sudo mkdir -p "$JSON_TRIGGER_DIR"
+sudo chown -R domino.domino "$JSON_TRIGGER_DIR"
 
 # copy the file to trigger the action
 sudo mv $JSON_TMP $JSON_TRIGGER_FILE
