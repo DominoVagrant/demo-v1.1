@@ -6,11 +6,11 @@
 set -e
 
 # Parameters
-TEMP_PATH=$1
+ORIGINAL_DATABASE=$1
 DBNAME=$2
 # TODO:  make title a parameter
 TITLE=`printf "$DBNAME" | sed 's/\.nsf$//' | sed 's:^.*\/\([^/]*\)$:\1:'`
-echo "Uploading database $TEMP_PATH to $DBNAME ($TITLE)"
+echo "Uploading database $ORIGINAL_DATABASE to $DBNAME ($TITLE)"
 
 # add a timestamp to the JSON file to avoid conflicts
 TIMESTAMP=`date +%Y%m%d%H%M%S`
@@ -18,6 +18,11 @@ JSON_NAME=create_${TIMESTAMP}.json
 JSON_TMP=/tmp/${JSON_NAME}
 JSON_TRIGGER_DIR=/local/dominodata/JavaAddin/Genesis/json
 JSON_TRIGGER_FILE=$JSON_TRIGGER_DIR/$JSON_NAME
+
+# Also copy the database to a temporary path with a timestamp
+# If I use the same template path for multiple databases, I run into caching issues on the Domino side.
+TEMP_PATH=/tmp/${TIMESTAMP}_template.nsf
+cp "$ORIGINAL_DATABASE" "$TEMP_PATH"
 
 # Determine if the database should be overwritten
 FULL_TARGET_PATH=/local/dominodata/$DBNAME
@@ -103,5 +108,11 @@ do
 	sleep 1
 done
 
+# cleanup temporary files
+sudo rm -f "$TEMP_PATH"
+# JSON file was moved and cleaned by Genesis
+
 # TODO:  check response file for error messages
+
+
 echo "Deployment Successful."
