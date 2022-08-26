@@ -9,7 +9,7 @@ set -e
 TEMP_PATH=$1
 DBNAME=$2
 # TODO:  make title a parameter
-TITLE=`printf "$TEMP_PATH" | sed 's/\.nsf$//' | sed 's:^.*\/\([^/]*\)$:\1:'`
+TITLE=`printf "$DBNAME" | sed 's/\.nsf$//' | sed 's:^.*\/\([^/]*\)$:\1:'`
 echo "Uploading database $TEMP_PATH to $DBNAME ($TITLE)"
 
 # add a timestamp to the JSON file to avoid conflicts
@@ -27,6 +27,8 @@ if [ -e "$FULL_TARGET_PATH" ]; then
 fi
 
 # create the trigger file
+# For now, I am giving "-Default-" designer access to that the user be able to deploy agents.
+# TODO:  add an entry for the safe ID user(s) instead.
 cat > /tmp/$JSON_NAME << EndOfMessage
 {
     "title": "Upload Database",
@@ -42,7 +44,39 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 					"filePath": "$DBNAME",
 					"templatePath": "$TEMP_PATH",
 					"sign": true,
-					"replace": $REPLACE
+					"replace": $REPLACE,
+					"ACL": {
+						"ACLEntries": [
+							{
+								"name": "-Default-",
+								"level": "designer",
+								"type": "unspecified",
+								"isPublicReader": true,
+								"isPublicWriter": true
+							},
+							{
+								"name": "LocalDomainAdmins",
+								"level": "manager",
+								"type": "personGroup",
+								"isPublicReader": true,
+								"isPublicWriter": true
+							},
+							{
+								"name": "LocalDomainServers",
+								"level": "manager",
+								"type": "serverGroup",
+								"isPublicReader": true,
+								"isPublicWriter": true
+							},
+							{
+								"name": "OtherDomainServers",
+								"level": "noAccess",
+								"type": "serverGroup",
+								"isPublicReader": true,
+								"isPublicWriter": true
+							}
+						]
+					}
 				}
 			]
 		}
