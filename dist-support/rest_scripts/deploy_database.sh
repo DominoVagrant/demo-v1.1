@@ -112,7 +112,12 @@ done
 sudo rm -f "$TEMP_PATH"
 # JSON file was moved and cleaned by Genesis
 
-# TODO:  check response file for error messages
-
-
-echo "Deployment Successful."
+# check response file for error messages
+RESPONSE_FILE=$(printf "$JSON_TRIGGER_FILE" | sed 's:/json/:/jsonresponse/:')
+RESPONSE=$(cat "$RESPONSE_FILE" | tr -d '\n')
+if [ "$RESPONSE" = "OK" ]; then
+	echo "Successfully deployed database."
+else
+	echo "Deployment failed:  '$RESPONSE'"
+	exit 1
+fi
