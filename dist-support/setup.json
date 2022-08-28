@@ -79,12 +79,12 @@
 				  "ServerName": "CN=demo/O=DEMO"
 				},
 				"items": {
-				  "FullAdmin": "LocalDomainAdmins",
-				  "CreateAccess": "LocalDomainAdmins",
-				  "ReplicaAccess": "LocalDomainAdmins",
-				  "UnrestrictedList": "LocalDomainAdmins",
-				  "OnBehalfOfLst": "LocalDomainAdmins",
-				  "RestrictedList": "LocalDomainAdmins",
+				  "FullAdmin": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "CreateAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "ReplicaAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "UnrestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "OnBehalfOfLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "RestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "HTTP_EnableSessionAuth": "1"
 				}
 			  },
@@ -97,6 +97,17 @@
 				  "Enabled": "2",
 				  "Program": "runjava",
 				  "Source": "CN=demo/O=DEMO"
+				}
+			  },
+			  {
+				"action": "create",
+				"computeWithForm": true,
+				"items": {
+				  "Form": "Group",
+				  "Type": "Group",
+				  "GroupType": "0",
+				  "ListName": "AutomaticallyCrossCertifiedUsers",
+				  "ListDescription": "Created automatically during installation"
 				}
 			  }
 			]
