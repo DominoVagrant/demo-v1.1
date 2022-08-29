@@ -60,6 +60,13 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"isPublicWriter": true
 							},
 							{
+								"name": "AutomaticallyCrossCertifiedUsers",
+								"level": "manager",
+								"type": "personGroup",
+								"isPublicReader": true,
+								"isPublicWriter": true
+							},
+							{
 								"name": "LocalDomainAdmins",
 								"level": "manager",
 								"type": "personGroup",
