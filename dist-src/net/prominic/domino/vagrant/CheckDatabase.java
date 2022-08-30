@@ -1,5 +1,6 @@
 package net.prominic.domino.vagrant;
 
+import lotus.domino.ACL;
 import lotus.domino.Database;
 import lotus.domino.DbDirectory;
 import lotus.domino.NotesException;
@@ -17,7 +18,7 @@ public class CheckDatabase {
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Insufficient Arguments.  Usage:  ");
-            System.out.println("java -jar CheckDatabase.jar <server> <database>");
+            System.out.println("java -jar CheckDatabase.jar <server> <database> [acl_username]");
             System.exit(1);
         }
         String serverName = args[0];
@@ -30,6 +31,12 @@ public class CheckDatabase {
             
             Session session = NotesFactory.createSession();
             System.out.println("Running on Notes Version:  '" + session.getNotesVersion() + "'.");
+        
+			// read a user to check against the ACL
+			String testUser = session.getUserName();  // check the running user
+			if (args.length >= 3) {
+				testUser = args[2];
+			}
             
             checkServer(session, serverName);
             
@@ -42,6 +49,8 @@ public class CheckDatabase {
                 String databaseTitle = database.getTitle();
                 System.out.println("SUCCESSFUL!");
                 System.out.println("Server:  '" + actualServerName + "', Database: '" + databaseTitle + "'.");
+                
+                checkACLAccess(database, testUser);
             }
             finally {
                 if (null != database) {
@@ -90,6 +99,46 @@ public class CheckDatabase {
         finally {
             if (null != database) { database.recycle(); }
             if (null != directory) { directory.recycle(); }
+        }
+    }
+    
+    public static void checkACLAccess(Database database, String testUser) {
+        try {
+            //String title = database.getTitle();
+            int accLevel = database.queryAccess(testUser);
+            String accessStr = null;
+            switch (accLevel) {
+                case(ACL.LEVEL_NOACCESS) :
+                    accessStr = "no";
+                    break;
+                case(ACL.LEVEL_DEPOSITOR) :
+                    accessStr = "depositor";
+                    break;
+                case(ACL.LEVEL_READER) :
+                    accessStr = "reader";
+                    break;
+                case(ACL.LEVEL_AUTHOR) :
+                    accessStr = "author";
+                    break;
+                case(ACL.LEVEL_EDITOR) :
+                    accessStr = "editor";
+                    break;
+                case(ACL.LEVEL_DESIGNER) :
+                    accessStr = "designer";
+                    break;
+                case(ACL.LEVEL_MANAGER) :
+                    accessStr = "manager";
+                    break;
+                default:
+                    accessStr = "unknown";
+                    break; 
+            }
+
+            System.out.println("User '"+ testUser + "' has '" + accessStr + "' access to this database.");
+        }
+        catch (Exception ex) {
+            System.out.println("Could not read access level.");
+            ex.printStackTrace();
         }
     }
 
