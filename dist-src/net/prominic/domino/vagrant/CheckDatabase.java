@@ -1,5 +1,7 @@
 package net.prominic.domino.vagrant;
 
+import java.util.Vector;
+
 import lotus.domino.ACL;
 import lotus.domino.Database;
 import lotus.domino.DbDirectory;
@@ -109,7 +111,7 @@ public class CheckDatabase {
             String accessStr = null;
             switch (accLevel) {
                 case(ACL.LEVEL_NOACCESS) :
-                    accessStr = "no";
+                    accessStr = "none";
                     break;
                 case(ACL.LEVEL_DEPOSITOR) :
                     accessStr = "depositor";
@@ -133,8 +135,42 @@ public class CheckDatabase {
                     accessStr = "unknown";
                     break; 
             }
-
             System.out.println("User '"+ testUser + "' has '" + accessStr + "' access to this database.");
+
+            System.out.println("Privileges:  ");
+            int accPriv = database.queryAccessPrivileges(testUser);
+            // Check each privilege bit to see if it is 0 or 1
+            if ((accPriv & Database.DBACL_CREATE_DOCS) > 0)
+                System.out.println("\tCreate documents");
+            if ((accPriv & Database.DBACL_DELETE_DOCS) > 0)
+                System.out.println("\tDelete documents");
+            if ((accPriv & Database.DBACL_CREATE_PRIV_AGENTS) > 0)
+                System.out.println("\tCreate private agents");
+            if ((accPriv & Database.DBACL_CREATE_PRIV_FOLDERS_VIEWS) > 0)
+                System.out.println("\tCreate private folders/views");
+            if ((accPriv & Database.DBACL_CREATE_SHARED_FOLDERS_VIEWS) > 0)
+                System.out.println("\tCreate shared folders/views");
+            if ((accPriv & Database.DBACL_CREATE_SCRIPT_AGENTS) > 0)
+                System.out.println("\tCreate LotusScript/Java agents");
+            if ((accPriv & Database.DBACL_READ_PUBLIC_DOCS) > 0)
+                System.out.println("\tRead public documents");
+            if ((accPriv & Database.DBACL_WRITE_PUBLIC_DOCS) > 0)
+                System.out.println("\tWrite public documents");
+            if ((accPriv & Database.DBACL_REPLICATE_COPY_DOCS) > 0)
+                System.out.println("\tReplicate or copy documents");
+
+            Vector roles = database.queryAccessRoles(testUser);
+            if (roles.size() == 0) {
+                System.out.println("No roles");
+            }
+            else {
+                System.out.println("Roles:");
+                for (int i = 0; i < roles.size(); i++) {
+                    System.out.println("\t" + roles.elementAt(i));
+                }
+            }
+
+
         }
         catch (Exception ex) {
             System.out.println("Could not read access level.");

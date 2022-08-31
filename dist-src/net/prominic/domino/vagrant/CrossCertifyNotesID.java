@@ -294,6 +294,9 @@ public class CrossCertifyNotesID
 			members.add(username);
 			groupDoc.replaceItemValue("Members", members);
 			
+			// computeWithForm - is this required?
+			groupDoc.computeWithForm(false, true);
+			
 			// save
 			if (!groupDoc.save(true)) { // force the save
 				throw new Exception("Could not update group document.");

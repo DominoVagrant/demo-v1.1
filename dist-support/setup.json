@@ -78,12 +78,14 @@
 				  "Type": "Server",
 				  "ServerName": "CN=demo/O=DEMO"
 				},
+				"computeWithForm": true,
 				"items": {
 				  "FullAdmin": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "CreateAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "ReplicaAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "UnrestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
-				  "OnBehalfOfLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "OnBehalfOfInvokerLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "LibsLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "RestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "HTTP_EnableSessionAuth": "1"
 				}

@@ -57,21 +57,31 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"level": "designer",
 								"type": "unspecified",
 								"isPublicReader": true,
-								"isPublicWriter": true
+								"isPublicWriter": true,
+								"canDeleteDocuments": true
+							},
+							{
+								"name": "Anonymous",
+								"level": "reader",
+								"type": "person",
+								"isPublicReader": true,
+								"isPublicWriter": true,
 							},
 							{
 								"name": "AutomaticallyCrossCertifiedUsers",
 								"level": "manager",
 								"type": "personGroup",
 								"isPublicReader": true,
-								"isPublicWriter": true
+								"isPublicWriter": true,
+								"canDeleteDocuments": true
 							},
 							{
 								"name": "LocalDomainAdmins",
 								"level": "manager",
 								"type": "personGroup",
 								"isPublicReader": true,
-								"isPublicWriter": true
+								"isPublicWriter": true,
+								"canDeleteDocuments": true
 							},
 							{
 								"name": "LocalDomainServers",
@@ -86,7 +96,23 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"type": "serverGroup",
 								"isPublicReader": true,
 								"isPublicWriter": true
-							}
+							},
+							{
+								"name": "Demo Admin/DEMO",
+								"level": "manager",
+								"type": "person",
+								"isPublicReader": true,
+								"isPublicWriter": true,
+								"canDeleteDocuments": true
+							},
+							{
+								"name": "Joel C. Anderson/A55D78/PNI",
+								"level": "manager",
+								"type": "person",
+								"isPublicReader": true,
+								"isPublicWriter": true,
+								"canDeleteDocuments": true
+							},
 						]
 					}
 				}
