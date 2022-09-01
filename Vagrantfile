@@ -221,7 +221,7 @@ Vagrant.configure("2") do |config|
   #
     config.vm.synced_folder './dist-id-files', '/home/vagrant/dist-id-files', SharedFoldersEnableSymlinksCreate: false
     config.vm.synced_folder './dist',          '/home/vagrant/dist',          SharedFoldersEnableSymlinksCreate: false
-    config.vm.synced_folder './dist-src',      '/home/vagrant/dist-src',      SharedFoldersEnableSymlinksCreate: false
+    config.vm.synced_folder './src/main/java',      '/home/vagrant/dist-src',      SharedFoldersEnableSymlinksCreate: false
     config.vm.synced_folder './dist-build',    '/home/vagrant/dist-build',    SharedFoldersEnableSymlinksCreate: false
     config.vm.synced_folder './dist-built',    '/home/vagrant/dist-built',    SharedFoldersEnableSymlinksCreate: false
   else
@@ -392,6 +392,7 @@ Vagrant.configure("2") do |config|
   
   ## Copy distribution files to /local/notesjava
   config.vm.provision "shell", name: "Copy dist JARs to NotesJava", privileged:true, inline: "cp /home/vagrant/dist/*.jar /local/notesjava/", run:"always"
+  config.vm.provision "shell", name: "Copy dist JARs to NotesJava", privileged:true, inline: "cp /vagrant/build/libs/*.jar /local/notesjava/", run:"always"
 
   
   

@@ -14,3 +14,13 @@ dist-id-files/
 .settings/
 .gradle/
 build/
+
+# only save the .bsh files in dist-build
+dist-build/*.class
+dist-build/*.idt
+dist-build/*.jar
+dist-build/*.nbf
+dist-build/*.txt
+dist-build/net
+
+dist-built/*

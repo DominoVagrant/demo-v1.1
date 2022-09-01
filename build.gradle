@@ -62,8 +62,7 @@ repositories {
 sourceSets {
     main {
         java {
-            //srcDirs = ['src/main/java']
-            srcDirs = ['dist-src']
+            srcDirs = ['src/main/java']
             
             // The servlet requires additional dependencies that are not available with the Notes client
             exclude '**/ExampleServlet*'
@@ -132,7 +131,7 @@ task jarIndividual() {
 }
 	
 // generate tasks to create individual jars
-String jarIndividualDir = project.findProperty('jarIndividualDir') ?: 'dist-src/net/prominic/domino/vagrant'
+String jarIndividualDir = project.findProperty('jarIndividualDir') ?: 'src/main/java/net/prominic/domino/vagrant'
 new File(jarIndividualDir).eachFileRecurse groovy.io.FileType.FILES, {File curFile ->
 	String fullName = curFile.getName()
 	int splitIndex = fullName.lastIndexOf('.')
