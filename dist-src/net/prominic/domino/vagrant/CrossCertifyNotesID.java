@@ -176,6 +176,8 @@ public class CrossCertifyNotesID
 			if (null == certView) {
 				throw new Exception("Could not open cross-certificate view.");
 			}
+			certView.refresh();   // avoid race conditions on view population
+			certView.setAutoUpdate(false);  // avoid updates in the middle of iteration
 			
 			entries = certView.getAllEntries();
 			ViewEntry curEntry = entries.getFirstEntry();
