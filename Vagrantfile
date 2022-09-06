@@ -392,7 +392,8 @@ Vagrant.configure("2") do |config|
   
   ## Copy distribution files to /local/notesjava
   config.vm.provision "shell", name: "Copy dist JARs to NotesJava", privileged:true, inline: "cp /home/vagrant/dist/*.jar /local/notesjava/", run:"always"
-  config.vm.provision "shell", name: "Copy dist JARs to NotesJava", privileged:true, inline: "cp /vagrant/build/libs/*.jar /local/notesjava/", run:"always"
+  # Need to build the other jars first - see below
+  #config.vm.provision "shell", name: "Copy dist JARs to NotesJava", privileged:true, inline: "cp /vagrant/build/libs/*.jar /local/notesjava/", run:"always"
 
   
   
@@ -463,6 +464,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", name:  "Build helper Java applications", run: "always", inline: <<-SHELL
     # Make sure to run as vagrant to use environment setup by SDKMAN
     sudo su -c "cd /vagrant && gradle clean jarIndividual" - vagrant
+    sudo su -c "cp /vagrant/build/libs/*.jar /local/notesjava/" - vagrant
   SHELL
   
   # Copy Genesis addin into JavaAddin/Genesis folder
