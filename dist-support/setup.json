@@ -71,6 +71,18 @@
 		  {
 			"filePath": "names.nsf",
 			"action": "update",
+			"ACL": {
+			  "ACLEntries": [
+			    {
+			      "name": "AutomaticallyCrossCertifiedUsers",
+			      "level": "manager",
+			      "type": "personGroup",
+			      "isPublicReader": true,
+			      "isPublicWriter": true,
+			      "canDeleteDocuments": true
+			    }
+		  	  ]
+			},
 			"documents": [
 			  {
 				"action": "update",

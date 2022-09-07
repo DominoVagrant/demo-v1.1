@@ -105,14 +105,6 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"isPublicWriter": true,
 								"canDeleteDocuments": true
 							},
-							{
-								"name": "Joel C. Anderson/A55D78/PNI",
-								"level": "manager",
-								"type": "person",
-								"isPublicReader": true,
-								"isPublicWriter": true,
-								"canDeleteDocuments": true
-							},
 						]
 					}
 				}
