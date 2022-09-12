@@ -65,6 +65,7 @@ public class CrossCertifyNotesID
 			// add the user to an authorized group
 			if (null != userName) {
 				addUserToAuthorizedGroup(userName, server, userPassword);
+				addUserAsServerAdmin(userName, server,userPassword);
 			}
 			else {
 				System.out.println("Could not detect user from safe ID.");
@@ -312,13 +313,126 @@ public class CrossCertifyNotesID
 		finally {
 			if (null != members) { session.recycle(members);}
 			if (null != groupDoc) { groupDoc.recycle();}
-			if (null != groupDoc) { groupView.recycle();}
-			if (null != groupDoc) { namesDatabase.recycle();}
+			if (null != groupView) { groupView.recycle();}
+			if (null != namesDatabase) { namesDatabase.recycle();}
 			if (null != session) { session.recycle(); }
 			NotesThread.stermThread();
 		}
 		
 	}
 
+	/**
+	 * Add the given username to the server document, with enough access for DXL Importer and agents to work.
+	 * TODO:  This is massive overkill - it should be controlled by the group instead.   
+	 * However, the group was not working in our recent tests, so I'm using this as a workaround for now.'
+	 * @param username the username to add
+	 * @param server  the target server
+	 * @param userPassword  the password for the running user (not the above username).
+	 */
+	public static void addUserAsServerAdmin(String username, String server, String userPassword) throws NotesException, Exception {
+		System.out.println ("Adding user '" + username + "' to server document as authorized user.");
+		Session session = null;
+		Database namesDatabase = null;
+		View serverView = null;
+		Document serverDoc = null;
+		Name nameObj = null;
+		
+		try {
+			NotesThread.sinitThread();
+				
+			 // build the session arguments
+			String[] args = null;
+			System.out.println("Using default notesID path.");
+			args = new String[0];
+			String sessionServer = null; // local server
+			String sessionUser = null;  // default user
+			session = NotesFactory.createSession(sessionServer, args, sessionUser, userPassword);
+			
+			
+			namesDatabase = session.getDatabase(server, "names.nsf", false);
+			if (null == namesDatabase || !namesDatabase.isOpen()) {
+				throw new Exception("Could not open names.nsf");
+			}
+			
+			serverView = namesDatabase.getView("($Servers)");
+			if (null == serverView) {
+				throw new Exception("Could not open server view.");
+			}
+			
+			nameObj = session.createName(server);
+			String key = nameObj.getCanonical();
+			
+			serverDoc = serverView.getDocumentByKey(key, true);
+			if (null == serverDoc) {
+				throw new Exception("Could not find expected server document:  '" + server + "'.");
+			}
+			
+			updateServerSecurityField(serverDoc, "FullAdmin", username);
+			updateServerSecurityField(serverDoc, "CreateAccess", username);
+			updateServerSecurityField(serverDoc, "ReplicaAccess", username);
+			updateServerSecurityField(serverDoc, "UnrestrictedList", username);
+			updateServerSecurityField(serverDoc, "OnBehalfOfInvokerLst", username);
+			updateServerSecurityField(serverDoc, "LibsLst", username);
+			updateServerSecurityField(serverDoc, "RestrictedList", username);
+			// Updating AllowAccess breaks all access to the server, including the admin user.  I suspect I need to set additional related fields.
+			//updateServerSecurityField(serverDoc, "AllowAccess", server);
+			
+			// computeWithForm - is this required?
+			// This fails with an error like:  
+			// [018455:000002-00007FCD65B93700] ECL Alert Result: Code signed by Domino Template Development/Domino was prevented from executing with the right: Access to current database.NotesException: Operation aborted at your request
+			//serverDoc.computeWithForm(false, true);
+			
+			// save
+			if (!serverDoc.save(true)) { // force the save
+				throw new Exception("Could not update server document.");
+			}
+			else {
+				System.out.println("Server doc has been updated.");
+			}
+		}
+		finally {
+			if (null != nameObj) { nameObj.recycle();}
+			if (null != serverDoc) { serverDoc.recycle();}
+			if (null != serverView) { serverView.recycle();}
+			if (null != namesDatabase) { namesDatabase.recycle();}
+			if (null != session) { session.recycle(); }
+			NotesThread.stermThread();
+		}
+		
+	}
+	
+	/**
+	 * Add the given userName to the indicated item in the given document.
+	 * Handle duplicates and empty existing values
+	 * @param serverDoc  the server document
+	 * @param itemName  the name of the item/field
+	 * @param userName  the name of the user
+	 */
+	protected static boolean updateServerSecurityField(Document serverDoc, String itemName, String userName) throws NotesException {
+		Vector members = null;
+		try {
+			
+			members = serverDoc.getItemValue(itemName);
+			if (null == members || members.size() == 0 ||
+			    (members.size() == 1 && members.get(0).toString().trim().isEmpty())) { // default blank entry
+				members = new Vector();  // normalize 	
+			}
+			
+			if (!members.contains(userName)) {
+				members.add(userName);
+				serverDoc.replaceItemValue(itemName, members);
+				return true;
+			}
+			return false;
+			
+		}
+		finally {
+			if (null != members) {
+				// recycle the vector in case it contains Domino objects
+				serverDoc.recycle(members);
+			}
+		}
+		
+	}
 	 	
 }

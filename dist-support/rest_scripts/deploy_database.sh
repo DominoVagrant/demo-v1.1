@@ -70,7 +70,7 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 							{
 								"name": "AutomaticallyCrossCertifiedUsers",
 								"level": "manager",
-								"type": "personGroup",
+								"type": "mixedGroup",
 								"isPublicReader": true,
 								"isPublicWriter": true,
 								"canDeleteDocuments": true

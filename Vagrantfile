@@ -491,6 +491,9 @@ Vagrant.configure("2") do |config|
       # The password will be briefly visible in the running process list, but not in the command history
       # Explicitly run as 'vagrant' to avoid "Error Code 493: Do not run as root."
       sudo su -c "yes \"`jq -r '.serverSetup | .admin | .password' /local/dominodata/setup.json`\" | $JAVA_HOME/bin/java -jar /vagrant/build/libs/CrossCertifyNotesID.jar safe.ids" - vagrant
+      
+      # Need to restart the server for this to take effect:
+      sudo su -c 'screen -X stuff "restart server^M"' - vagrant
     SHELL
   end
   
