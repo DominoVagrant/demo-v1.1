@@ -92,13 +92,13 @@
 				},
 				"computeWithForm": true,
 				"items": {
-				  "FullAdmin": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
-				  "CreateAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
-				  "ReplicaAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
-				  "UnrestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
-				  "OnBehalfOfInvokerLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
-				  "LibsLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
-				  "RestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Domino Admin/DEMO"],
+				  "FullAdmin": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "CreateAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "ReplicaAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "UnrestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "OnBehalfOfInvokerLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "LibsLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
+				  "RestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers"],
 				  "HTTP_EnableSessionAuth": "1"
 				}
 			  },

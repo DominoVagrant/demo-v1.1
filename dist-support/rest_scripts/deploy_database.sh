@@ -63,7 +63,7 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 							},
 							{
 								"name": "Anonymous",
-								"level": "author",
+								"level": "depositor",
 								"type": "person",
 								"isPublicReader": true,
 								"isPublicWriter": true,
