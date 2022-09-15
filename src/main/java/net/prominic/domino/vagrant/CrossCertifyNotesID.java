@@ -65,6 +65,7 @@ public class CrossCertifyNotesID
 			// add the user to an authorized group
 			if (null != userName) {
 				addUserToAuthorizedGroup(userName, server, userPassword);
+				// This is required to fix the "Error validating execution rights" error.  The above group does not work as expected
 				addUserAsServerAdmin(userName, server,userPassword);
 			}
 			else {

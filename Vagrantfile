@@ -239,7 +239,8 @@ Vagrant.configure("2") do |config|
 	yum -y install mc
 	# For conveninece of starting Domino and keeping it persistent (without Jedi)
 	yum -y install screen
-	# JSON parsing for cross-certify
+	# JSON parsing for extracting server and user details from setup.json
+	yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 	yum -y install jq
   SHELL
 
