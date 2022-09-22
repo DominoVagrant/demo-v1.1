@@ -59,7 +59,8 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"isPublicReader": true,
 								"isPublicWriter": true,
 								"canDeleteDocuments": true,
-								"canCreateLSOrJavaAgent": true
+								"canCreateLSOrJavaAgent": true,
+								"canReplicateOrCopyDocuments": true
 							},
 							{
 								"name": "Anonymous",
