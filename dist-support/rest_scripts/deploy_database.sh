@@ -100,13 +100,13 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"isPublicWriter": true
 							},
 							{
-								"name": "Demo Admin/DEMO",
+								"name": "CN=Demo Admin/O=DEMO",
 								"level": "manager",
 								"type": "person",
 								"isPublicReader": true,
 								"isPublicWriter": true,
 								"canDeleteDocuments": true
-							},
+							}
 						]
 					}
 				}

@@ -45,6 +45,18 @@
 			"count": 7,
 			"IDPath": "/local/dominodata/ids",
 			"pattern": "server#"
+		},
+		"registerUsers": {
+			"users": [
+				{
+					"firstName": "Dev",
+					"lastName": "User",
+					"shortName": "DevUser",
+					"password":"password",
+					"IDFilePath":"/local/dominodata/dev-user.id"
+					
+				}
+			]
 		}
 	},
 
@@ -92,13 +104,13 @@
 				},
 				"computeWithForm": true,
 				"items": {
-				  "FullAdmin": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
-				  "CreateAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
-				  "ReplicaAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
-				  "UnrestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
-				  "OnBehalfOfInvokerLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
-				  "LibsLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
-				  "RestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "Demo Admin/DEMO"],
+				  "FullAdmin": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
+				  "CreateAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
+				  "ReplicaAccess": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
+				  "UnrestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
+				  "OnBehalfOfInvokerLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
+				  "LibsLst": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
+				  "RestrictedList": ["LocalDomainAdmins", "AutomaticallyCrossCertifiedUsers", "CN=Demo Admin/O=DEMO"],
 				  "HTTP_EnableSessionAuth": "1"
 				}
 			  },
