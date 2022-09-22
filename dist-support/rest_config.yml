@@ -3,5 +3,6 @@ restinterface:
         - upload-database
         - upload-html
         - java-domino-gradle
+        - nsfodp
     serverName:  demo/DEMO
     baseURL:  https://127.0.0.1:8080
