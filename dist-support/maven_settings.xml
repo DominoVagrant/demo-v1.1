@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+    <profiles>
+    
+        <!-- for local operations -->
+        <profile>
+            <id>nsfodp</id>  
+            <properties>       
+                <notes-program>/opt/hcl/domino/notes/latest/linux</notes-program>
+                <notes-platform>file:///opt/nsfodp/updatesite</notes-platform>
+                <notes-ini>/local/notesjava/notes.ini </notes-ini>
+                <notes-data>/local/notesjava</notes-data>
+            </properties>
+        </profile>    
+
+	
+
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>nsfodp</activeProfile>
+    </activeProfiles>
+
+ 
+</settings>

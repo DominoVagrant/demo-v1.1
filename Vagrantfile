@@ -498,6 +498,10 @@ Vagrant.configure("2") do |config|
     SHELL
   end
   
+  # ODP and updatesite auto install and configuration
+  config.vm.provision "shell", path: "dist-support/installUpdateSite.sh", privileged:false
+
+  
   
   
   # to make Domino http work (http://localhost)
@@ -517,7 +521,7 @@ Vagrant.configure("2") do |config|
     # These libraries could be moved or removed by the user if they were already covered
     yum install -y wget
     yum install -y unzip
-    wget https://github.com/Moonshine-IDE/Vagrant-REST-Interface/releases/download/0.1.6/VagrantCRUD_centos7.zip
+    wget https://github.com/Moonshine-IDE/Vagrant-REST-Interface/releases/download/0.1.7/VagrantCRUD_centos7.zip
 
     unzip -d rest VagrantCRUD_centos7.zip
     mv rest/rest-interface-*.jar rest/rest-interface.jar
