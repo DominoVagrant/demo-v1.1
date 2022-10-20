@@ -468,6 +468,9 @@ Vagrant.configure("2") do |config|
     sudo su -c "cp /vagrant/build/libs/*.jar /local/notesjava/" - vagrant
   SHELL
   
+  # Create names.nsf for /local/notesjava
+  config.vm.provision "shell", name: "Create names.nsf", run: "once", path: "./dist-support/CreateNamesDatabase.sh"
+  
   # Copy Genesis addin into JavaAddin/Genesis folder
   config.vm.provision "shell", inline: "mkdir -p /local/dominodata/JavaAddin/Genesis", privileged:true #####, run:"always"
   config.vm.provision "shell", privileged:true, inline: "chown -R domino:domino /local/dominodata/JavaAddin" #####, run:"always" 
