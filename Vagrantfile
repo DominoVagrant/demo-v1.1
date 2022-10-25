@@ -5,6 +5,7 @@
 
 #Notes on Domino 12 "One Touch" automated initial setup
 #https://help.hcltechsw.com/domino/12.0.0/admin/inst_onetouch_invoking_json_withoutdocker.html
+#https://help.hcltechsw.com/domino/12.0.0/admin/inst_onetouch_preparing_json.html
 #https://blog.nashcom.de/nashcomblog.nsf/dx/domino-v12-one-touch-setup-for-real-world-deployments.htm?opendocument&comments
 #http://blog.nashcom.de/nashcomblog.nsf/dx/complete-domino-v12-server-setup-leveraging-on-touch.htm
 
