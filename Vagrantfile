@@ -171,7 +171,9 @@ Vagrant.configure("2") do |config|
   #might be able to get this alternate approach to work in the Vagrantfile:
   #vagrant plugin install vagrant-vbguest
   #vagrant vbguest --do install --no-cleanup
-  config.vbguest.auto_update = false
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = false
+  end
   config.vm.provision "shell", name: "WORKAROUND for VirtualBox Guest Additions.", privileged: true, inline: <<-SHELL
     VBOX_VERSION_ON_HOST_OS=6.1.22     #This should be set to YOUR host OS release of VirtualBox
 	
