@@ -24,7 +24,7 @@ mkdir -p $TMP_DIR
 # unzip and setup project
 cd $TMP_DIR
 unzip $ZIP_FILE || EXIT_CODE=$?
-if [ "$EXIT_CODE" -gt 1]; then
+if [ "$EXIT_CODE" -gt 1 ]; then
     echo "unzip failed with exit code $EXIT_CODE";
     exit $EXIT_CODE;
 fi
