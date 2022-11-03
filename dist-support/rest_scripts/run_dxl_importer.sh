@@ -23,10 +23,14 @@ mkdir -p $TMP_DIR
 cd $TMP_DIR
 unzip $ZIP_FILE || EXIT_CODE=$?
 if [ "$EXIT_CODE" -gt 1 ]; then
+    # exit code 1 indicates a warning
     echo "unzip failed with exit code $EXIT_CODE";
     exit $EXIT_CODE;
 fi
+# fix file permissions on Windows
 sudo chown -R vagrant.vagrant .
+sudo chmod -R 744 .
+# A copy of the notes.ini file is required for the Domino build
 ln -s /local/notesjava/notes.ini
 
 # Update Domino path
