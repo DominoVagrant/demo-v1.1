@@ -2,4 +2,4 @@
 * text=auto
 
 # Scripts should be enforced to use Linux-style newlines
-*.sh text
+*.sh eol=lf
