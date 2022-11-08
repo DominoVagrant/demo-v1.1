@@ -477,7 +477,7 @@ Vagrant.configure("2") do |config|
   # Copy Genesis addin into JavaAddin/Genesis folder
   config.vm.provision "shell", inline: "mkdir -p /local/dominodata/JavaAddin/Genesis", privileged:true #####, run:"always"
   config.vm.provision "shell", privileged:true, inline: "chown -R domino:domino /local/dominodata/JavaAddin" #####, run:"always" 
-  config.vm.provision "shell", name: "Copy Genesis-0.6.17.jar to /local/dominodata/JavaAddin/Genesis", privileged:true, inline: "cp /home/vagrant/dist/Genesis-0.6.17.jar /local/dominodata/JavaAddin/Genesis; chown domino:domino /local/dominodata/JavaAddin/Genesis/Genesis-0.6.17.jar" #####, run:"always"
+  config.vm.provision "shell", name: "Copy Genesis-0.6.18.jar to /local/dominodata/JavaAddin/Genesis", privileged:true, inline: "cp /home/vagrant/dist/Genesis-0.6.18.jar /local/dominodata/JavaAddin/Genesis; chown domino:domino /local/dominodata/JavaAddin/Genesis/Genesis-0.6.18.jar" #####, run:"always"
 
   # Start the Domino server
   config.vm.provision "shell", name: "Start Domino server in screen", run: "always", path: "./dist-support/StartDomino.sh"
