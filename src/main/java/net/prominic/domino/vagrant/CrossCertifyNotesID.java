@@ -368,13 +368,18 @@ public class CrossCertifyNotesID
 				throw new Exception("Could not find expected server document:  '" + server + "'.");
 			}
 			
-			updateServerSecurityField(serverDoc, "FullAdmin", username);
-			updateServerSecurityField(serverDoc, "CreateAccess", username);
-			updateServerSecurityField(serverDoc, "ReplicaAccess", username);
-			updateServerSecurityField(serverDoc, "UnrestrictedList", username);
-			updateServerSecurityField(serverDoc, "OnBehalfOfInvokerLst", username);
-			updateServerSecurityField(serverDoc, "LibsLst", username);
-			updateServerSecurityField(serverDoc, "RestrictedList", username);
+			// Track if any of the fields are update.
+			// This will support rerunning the agent for the same ID.
+			boolean updated = false;
+			
+			// update the security fields
+			updated = updateServerSecurityField(serverDoc, "FullAdmin", username) ? true : updated;
+			updated = updateServerSecurityField(serverDoc, "CreateAccess", username) ? true : updated;
+			updated = updateServerSecurityField(serverDoc, "ReplicaAccess", username) ? true : updated;
+			updated = updateServerSecurityField(serverDoc, "UnrestrictedList", username) ? true : updated;
+			updated = updateServerSecurityField(serverDoc, "OnBehalfOfInvokerLst", username) ? true : updated;
+			updated = updateServerSecurityField(serverDoc, "LibsLst", username) ? true : updated;
+			updated = updateServerSecurityField(serverDoc, "RestrictedList", username) ? true : updated;
 			// Updating AllowAccess breaks all access to the server, including the admin user.  I suspect I need to set additional related fields.
 			//updateServerSecurityField(serverDoc, "AllowAccess", server);
 			
@@ -384,7 +389,11 @@ public class CrossCertifyNotesID
 			//serverDoc.computeWithForm(false, true);
 			
 			// save
-			if (!serverDoc.save(true)) { // force the save
+			if (!updated) {
+				// If the document is not updated, saving will trigger an error
+				System.out.println("No server document updates required.");
+			}
+			else if (!serverDoc.save(true)) { // force the save
 				throw new Exception("Could not update server document.");
 			}
 			else {
