@@ -75,7 +75,8 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"type": "mixedGroup",
 								"isPublicReader": true,
 								"isPublicWriter": true,
-								"canDeleteDocuments": true
+								"canDeleteDocuments": true,
+								"canReplicateOrCopyDocuments": true
 							},
 							{
 								"name": "LocalDomainAdmins",
@@ -105,7 +106,8 @@ cat > /tmp/$JSON_NAME << EndOfMessage
 								"type": "person",
 								"isPublicReader": true,
 								"isPublicWriter": true,
-								"canDeleteDocuments": true
+								"canDeleteDocuments": true,
+								"canReplicateOrCopyDocuments": true
 							}
 						]
 					}

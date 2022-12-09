@@ -91,7 +91,21 @@
 			      "type": "personGroup",
 			      "isPublicReader": true,
 			      "isPublicWriter": true,
-			      "canDeleteDocuments": true
+			      "canDeleteDocuments": true,
+			      "canReplicateOrCopyDocuments": true,
+			      "roles": [
+  			        "GroupCreator",
+  			        "GroupModifier",
+  			        "NetCreator",
+  			        "PolicyCreator",
+  			        "PolicyModifier",
+  			        "PolicyReader",
+   			        "NetModifier",
+  			        "ServerCreator",
+  			        "ServerModifier",
+  			        "UserCreator",
+  			        "UserModifier"
+			      ]
 			    }
 		  	  ]
 			},

@@ -124,6 +124,8 @@ public class CrossCertifyNotesID
 			Registration reg = session.createRegistration();
 			reg.setRegistrationServer( server);
 			reg.setCertifierIDFile( certID);
+			
+			
 						
 			DateTime dt = session.createDateTime("Today");
 			dt.setNow();
@@ -674,7 +676,10 @@ public class CrossCertifyNotesID
 				for (Object roleObj : roles) {
 					String role = roleObj.toString();
 
-					if (aclRoles.contains(role) && !entry.isRoleEnabled(role)) {
+					if (entry.isRoleEnabled(role)) {
+						log(String.format(">> ACLEntry: role already added (%s)", role));
+					}
+					else if (aclRoles.contains(role)) {
 						entry.enableRole(role);
 						log(String.format(">> ACLEntry: enableRole (%s)", role));
 						toSave = true;
