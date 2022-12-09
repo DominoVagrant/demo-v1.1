@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.util.Date;
 import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -399,6 +400,9 @@ public class CrossCertifyNotesID
 			else {
 				System.out.println("Server doc has been updated.");
 			}
+			
+			// also update the ACL to give the user access to configure the server.
+			updateNamesACL(namesDatabase, username);
 		}
 		finally {
 			if (null != nameObj) { nameObj.recycle();}
@@ -444,5 +448,253 @@ public class CrossCertifyNotesID
 		}
 		
 	}
-	 	
+	
+	/**
+	 * Add an ACL entry for the user in the given database.
+	 * The user will have Manager access with all roles.
+	 * This was needed because the user was not properly recognized in AutomaticallyCrossCertifiedUsers, so this could be disabled once that bug is fixed.
+	 * @param  database  the database to update.  Expected to be names.nsf
+	 * @param  userName  the username to add, in canonical format
+	 */
+	protected static boolean updateNamesACL(Database database, String userName) throws NotesException, Exception {
+		ACL acl = null;
+		FileInputStream fis = null;
+		boolean updated = false;
+		try {
+			acl = database.getACL();
+			
+			String configFile = "/vagrant/dist-support/default_cross_certify_acl.json";
+			fis = new FileInputStream(configFile);
+			JSONObject json = (JSONObject)new JSONTokener(fis).nextValue();
+/* Example JSON:
+{
+  "level": "manager",
+  "type": "person",
+  "canDeleteDocuments": true,
+  "canReplicateOrCopyDocuments": true,
+  "roles": [ 
+    "GroupCreator",
+    "GroupModifier",
+    "NetCreator",
+    "PolicyCreator",
+    "PolicyModifier",
+    "PolicyReader",
+    "NetModifier ",
+    "ServerCreator",
+    "ServerModifier",
+    "UserCreator",
+    "UserModifier"
+  ]
+}
+*/
+			updated = updateACLFromConfig(acl, json, userName);
+			
+			if (!updated) {
+				System.out.println("No ACL updates required.");
+			}
+			else {
+				System.out.println("ACL updated and saved.");
+				acl.save();
+			}
+			
+		}
+		finally {
+			if (null != acl) { acl.recycle(); }
+			if (null != fis) { fis.close(); }
+		}
+		
+		return updated;
+		
+
+	}
+	
+	/**
+	 * Update the ACL to match the provided configuration.
+	 * Adapted from 	https://github.com/DominoGenesis/Genesis/blob/bde62b70bcd0fef35c41117a87daedba4b80a6f6/src/main/java/net/prominic/genesis/JSONRules.java#L534-L704
+	 * @param  acl  The names.nsf ACL
+	 * @param config  The JSON configuration object
+	 */
+	private static boolean updateACLFromConfig(ACL acl, JSONObject config, String userName) {
+		boolean toSave = false;
+
+		try {
+			ACLEntry entry = acl.getEntry(userName);
+
+			// 1. get/create entry (default no access)
+			if (entry == null) {
+				entry = acl.createACLEntry(userName, ACL.LEVEL_NOACCESS);
+				log(String.format("> ACL: new entry (%s)", userName));
+				toSave = true;
+			}
+
+			// 2. level
+			if (config.has("level")) {
+				String sLevel = (String) config.get("level");
+				int level = ACL.LEVEL_NOACCESS;
+				if ("noAccess".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_NOACCESS;
+				}
+				else if("depositor".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_DEPOSITOR;
+				}
+				else if("reader".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_READER;
+				}
+				else if("author".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_AUTHOR;
+				}
+				else if("editor".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_EDITOR;
+				}
+				else if("designer".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_DESIGNER;
+				}
+				else if("manager".equalsIgnoreCase(sLevel)) {
+					level = ACL.LEVEL_MANAGER;
+				}
+
+				if (entry.getLevel() != level) {
+					entry.setLevel(level);
+					toSave = true;
+					log(String.format(">> ACLEntry: level (%s)", sLevel));
+				}
+			}
+
+			// 3. type
+			if (config.has("type")) {
+				String sType = (String) config.get("type");
+				int type = ACLEntry.TYPE_UNSPECIFIED;
+				if ("unspecified".equalsIgnoreCase(sType)) {
+					type = ACLEntry.TYPE_UNSPECIFIED;
+				}
+				else if("person".equalsIgnoreCase(sType)) {
+					type = ACLEntry.TYPE_PERSON;
+				}
+				else if("server".equalsIgnoreCase(sType)) {
+					type = ACLEntry.TYPE_SERVER;
+				}
+				else if("personGroup".equalsIgnoreCase(sType)) {
+					type = ACLEntry.TYPE_PERSON_GROUP;
+				}
+				else if("serverGroup".equalsIgnoreCase(sType)) {
+					type = ACLEntry.TYPE_SERVER_GROUP;
+				}
+				else if("mixedGroup".equalsIgnoreCase(sType)) {
+					type = ACLEntry.TYPE_MIXED_GROUP;
+				}
+
+				if (entry.getUserType() != type) {
+					entry.setUserType(type);
+					log(String.format(">> ACLEntry: type (%s)", sType));
+					toSave = true;
+				}
+			}
+
+			// 4. canCreateDocuments
+			boolean canCreateDocuments = config.has("canCreateDocuments") && (Boolean) config.get("canCreateDocuments");
+			if (entry.isCanCreateDocuments() != canCreateDocuments) {
+				entry.setCanCreateDocuments(canCreateDocuments);
+				log(String.format(">> ACLEntry: setCanCreateDocuments (%b)", canCreateDocuments));
+				toSave = true;
+
+			}
+
+			// 5. canDeleteDocuments
+			boolean canDeleteDocuments = config.has("canDeleteDocuments") && (Boolean) config.get("canDeleteDocuments");
+			if (entry.isCanDeleteDocuments() != canDeleteDocuments) {
+				entry.setCanDeleteDocuments(canDeleteDocuments);
+				log(String.format(">> ACLEntry: canDeleteDocuments (%b)", canDeleteDocuments));
+				toSave = true;
+			}
+
+			// 6. canCreatePersonalAgent
+			boolean canCreatePersonalAgent = config.has("canCreatePersonalAgent") && (Boolean) config.get("canCreatePersonalAgent");
+			if (entry.isCanCreatePersonalAgent() != canCreatePersonalAgent) {
+				entry.setCanCreatePersonalAgent(canCreatePersonalAgent);
+				log(String.format(">> ACLEntry: canCreatePersonalAgent (%b)", canCreatePersonalAgent));
+				toSave = true;
+			}
+
+			// 7. canCreatePersonalFolder
+			boolean canCreatePersonalFolder = config.has("canCreatePersonalFolder") && (Boolean) config.get("canCreatePersonalFolder");
+			if (entry.isCanCreatePersonalFolder() != canCreatePersonalFolder) {
+				entry.setCanCreatePersonalFolder(canCreatePersonalFolder);
+				log(String.format(">> ACLEntry: canCreatePersonalFolder (%b)", canCreatePersonalFolder));
+				toSave = true;
+			}
+
+			// 8. canCreateSharedFolder
+			boolean canCreateSharedFolder = config.has("canCreateSharedFolder") && (Boolean) config.get("canCreateSharedFolder");
+			if (entry.isCanCreateSharedFolder() != canCreateSharedFolder) {
+				entry.setCanCreateSharedFolder(canCreateSharedFolder);
+				log(String.format("> ACL: entry canCreateSharedFolder (%b)", canCreateSharedFolder));
+				toSave = true;
+			}
+
+			// 9. canCreateLSOrJavaAgent
+			boolean canCreateLSOrJavaAgent = config.has("canCreateLSOrJavaAgent") && (Boolean) config.get("canCreateLSOrJavaAgent");
+			if (entry.isCanCreateLSOrJavaAgent() != canCreateLSOrJavaAgent) {
+				entry.setCanCreateLSOrJavaAgent(canCreateLSOrJavaAgent);
+				log(String.format(">> ACLEntry: canCreateLSOrJavaAgent (%b)", canCreateLSOrJavaAgent));
+				toSave = true;
+			}
+
+			// 10. isPublicReader
+			boolean isPublicReader = config.has("isPublicReader") && (Boolean) config.get("isPublicReader");
+			if (entry.isPublicReader() != isPublicReader) {
+				entry.setPublicReader(isPublicReader);
+				log(String.format(">> ACLEntry: isPublicReader (%b)", isPublicReader));
+				toSave = true;
+			}
+
+			// 11. isPublicWriter
+			boolean isPublicWriter = config.has("isPublicWriter") && (Boolean) config.get("isPublicWriter");
+			if (entry.isPublicWriter() != isPublicWriter) {
+				entry.setPublicWriter(isPublicWriter);
+				log(String.format(">> ACLEntry: isPublicWriter (%b)", isPublicWriter));
+				toSave = true;
+			}
+
+			// 12. canReplicateOrCopyDocuments
+			boolean canReplicateOrCopyDocuments = config.has("canReplicateOrCopyDocuments") && (Boolean) config.get("canReplicateOrCopyDocuments");
+			if (entry.isCanReplicateOrCopyDocuments() != canReplicateOrCopyDocuments) {
+				entry.setCanReplicateOrCopyDocuments(canReplicateOrCopyDocuments);
+				log(String.format(">> ACLEntry: canReplicateOrCopyDocuments (%b)", canReplicateOrCopyDocuments));
+				toSave = true;
+			}
+
+			// 13. roles
+			if (config.has("roles")) {
+				Vector<?> aclRoles = acl.getRoles();
+				log("Valid ACL Roles:  ");
+				for (Object aclRole : aclRoles) {
+					log("  " + aclRole.toString());
+				}
+				JSONArray roles = (JSONArray) config.get("roles");
+				for (Object roleObj : roles) {
+					String role = roleObj.toString();
+
+					if (aclRoles.contains(role) && !entry.isRoleEnabled(role)) {
+						entry.enableRole(role);
+						log(String.format(">> ACLEntry: enableRole (%s)", role));
+						toSave = true;
+					}
+					else {
+						log(String.format(">> ACLEntry: ignoring unsupported role (%s)", role));
+					}
+				}
+			}
+		} catch (Exception e) {
+			log(e);
+		}
+
+		return toSave;
+	}	
+	
+	protected static void log(String message) {
+		System.out.println(message);
+	} 	
+	protected static void log(Throwable e) {
+		e.printStackTrace(System.out);
+	} 	
 }
