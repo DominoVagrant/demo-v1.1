@@ -312,6 +312,25 @@ public class CrossCertifyNotesID
 				System.out.println("Authorized group has been updated.");
 			}
 			
+			// force refresh of ($ServerAccess)
+			View refreshView = null;
+			String viewName = "($ServerAccess)";
+			try {
+				refreshView = namesDatabase.getView(viewName);
+				if (null != refreshView) {
+					refreshView.refresh();
+				}
+				else {
+					System.out.println("Could not open view '" + viewName + "'.");
+				}
+			}
+			catch (Exception ex) {
+				System.out.println("Could not refresh view '" + viewName + "'.");
+			}
+			finally {
+				if (null != refreshView) { refreshView.recycle(); }
+			}
+			
 			session.recycle(members);
 		}
 		finally {
