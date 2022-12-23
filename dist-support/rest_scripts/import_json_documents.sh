@@ -67,7 +67,7 @@ importJsonFile() {
 	JSON_RESPONSE_FILE="$JSON_RESPONSE_DIR/$JSON_TARGET_NAME"
 	RESPONSE=$(cat "$JSON_RESPONSE_FILE" | tr -d '\n')
 	if [ "$RESPONSE" = "OK" ]; then
-		echo "Successfully deployed database."
+		echo "Import successful."
 	else
 		echo "Deployment failed:  '$RESPONSE'"
 		exit 1
