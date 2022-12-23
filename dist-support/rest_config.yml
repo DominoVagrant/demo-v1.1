@@ -5,9 +5,10 @@ grails:
             maxRequestSize: 104857600
 restinterface:
     capabilities:
-        - upload-database
-        - upload-html
+        - import-domino-json
         - java-domino-gradle
         - nsfodp
+        - upload-database
+        - upload-html
     serverName:  demo/DEMO
     baseURL:  https://127.0.0.1:8080
