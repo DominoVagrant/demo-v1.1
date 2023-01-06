@@ -561,6 +561,15 @@ Vagrant.configure("2") do |config|
       REST_HOST_PORT,
       REST_CONFIG_FILE
     ]
+  
+  # Deploy a default authentication database for Moonshine Royale applications using Genesis.
+  # Use the REST-interface deploy_database.sh script for this.  This does not have a dependency on REST-Interface itself.
+  config.vm.provision "shell", name: "Add auth.nsf database.", privileged:false, run: "always", inline: <<-SHELL
+    # Don't redeploy if it already exists
+    if [ ! -f /local/dominodata/auth.nsf ]; then
+      /opt/domino/scripts/deploy_database.sh /vagrant/dist-support/auth.nsf auth.nsf
+    fi
+  SHELL
 
   # Output a list of actions the user can run.  Run this last!
   config.vm.provision "shell",inline: "cat /home/vagrant/dist-support/CommandHelp.txt" , run:"always" 
