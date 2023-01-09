@@ -25,11 +25,15 @@ public class CrossCertifyNotesID
 {
 	public static final String AUTHORIZED_GROUP = "AutomaticallyCrossCertifiedUsers";
 	
+	protected static boolean debugMode = true;
+	
 	public static void main(String args[])
 	{
-		System.out.println("Starting cross-certification tool.");
+		log("Starting cross-certification tool.");
 		
 		FileInputStream fis = null;
+		boolean threadInitialized = false;
+		Session session = null;
 		try {
 				
 			// retrieve or compute the parameters
@@ -59,29 +63,51 @@ public class CrossCertifyNotesID
 			// currently we are using the admin user for actions like this
 			String userPassword = serverSetup.getJSONObject("admin").getString("password");
 			
-			String userName = crossCertify(targetID, userPassword, server, certID, certPassword);
+			
+			
+			// initialize the session
+			debug("NotesThread.sinitThread()");
+			NotesThread.sinitThread();
+			threadInitialized = true;
 				
-			System.out.println( "crossCertifyNotesID() completed.");
+			 // build the session arguments
+			String[] sessionArgs = null;
+			log("Using default notesID path.");
+			sessionArgs = new String[0];
+		
+			 //Session session = NotesFactory.createSession("localhost", args, "", "");
+			//Session session = NotesFactory.createSession(null, args, null, null);
+			String sessionServer = null; // local server
+			String sessionUser = null;  // default user
+			debug("NotesFactory.createSession");
+			session = NotesFactory.createSession(sessionServer, args, sessionUser, userPassword);
+			log("Running on Notes Version:  '" + session.getNotesVersion() + "'.");
+			
+			String userName = crossCertify(session, targetID, server, certID, certPassword);
+				
+			log( "crossCertifyNotesID() completed.");
 			
 			// add the user to an authorized group
 			if (null != userName) {
-				addUserToAuthorizedGroup(userName, server, userPassword);
+				addUserToAuthorizedGroup(session, userName, server, userPassword);
 				// This is required to fix the "Error validating execution rights" error.  The above group does not work as expected
-				addUserAsServerAdmin(userName, server,userPassword);
+				addUserAsServerAdmin(session, userName, server);
 			}
 			else {
-				System.out.println("Could not detect user from safe ID.");
+				log("Could not detect user from safe ID.");
 			}
 		}
-		catch (Throwable throwable) {
-			throwable.printStackTrace();
+		catch (Throwable t) {
+			log(t);
 		}
 		finally {
 			try {
+				if (null != session) { session.recycle(); }
+				if (threadInitialized) { NotesThread.stermThread(); }
 				if (null != fis) { fis.close(); }
 			}
 			catch (Exception ex) {
-				ex.printStackTrace();
+				log(ex);
 			}
 		}
 	}
@@ -91,8 +117,8 @@ public class CrossCertifyNotesID
 	
 	/**
 	 * Cross-certify the given targetID for the given server.
+	 * @param session  the Domino Session
 	 * @param targetID  the ID to sign
-	 * @param userPassword  The password for the ID file being used to make this request
 	 * @param server  the server to sign against
 	 * @param certID  the cert ID for server
 	 * @param certPassword  the password for certID
@@ -100,34 +126,23 @@ public class CrossCertifyNotesID
 	 * @throws NotesException if an error occurred in the Notes API
 	 * @throws Exception if the cross-certification failed
 	 */
-	public static String crossCertify(String targetID, String userPassword, String server, String certID, String certPassword)  throws Exception {
-		System.out.println("Signing ID:  '" + targetID + "'.");
+	public static String crossCertify(Session session, String targetID, String server, String certID, String certPassword)  throws Exception {
+		log("Signing ID:  '" + targetID + "'.");
+		
+		Registration reg = null;
+		DateTime dt = null;
 		try {
-			NotesThread.sinitThread();
-				
-			 // build the session arguments
-			String[] args = null;
-			System.out.println("Using default notesID path.");
-			args = new String[0];
-		
-			 //Session session = NotesFactory.createSession("localhost", args, "", "");
-			//Session session = NotesFactory.createSession(null, args, null, null);
-			String sessionServer = null; // local server
-			String sessionUser = null;  // default user
-			Session session = NotesFactory.createSession(sessionServer, args, sessionUser, userPassword);
-			System.out.println("Running on Notes Version:  '" + session.getNotesVersion() + "'.");
-				
-							 
-			AgentContext agentContext = session.getAgentContext();
-		
-			 // (Your code goes here) 
-			Registration reg = session.createRegistration();
+			debug("session.createRegistration()");
+			reg = session.createRegistration();
+			debug("Registration.setRegistrationServer('" + server + "')");
 			reg.setRegistrationServer( server);
+			debug("Registration.setCertifierIDFile('" + server + "')");
 			reg.setCertifierIDFile( certID);
 			
 			
 						
-			DateTime dt = session.createDateTime("Today");
+			debug("session.createDateTime()");
+			dt = session.createDateTime("Today");
 			dt.setNow();
 			dt.adjustYear(1);	 
 			reg.setExpiration(dt);
@@ -135,11 +150,12 @@ public class CrossCertifyNotesID
 			// NOTE:  crossCertify triggers a password check even with an authenticated session, if the ID file has a password
 			// I see this behavior is specifically noted for the recertify method, but not crossCertify:  https://help.hcltechsw.com/dom_designer/12.0.0/basic/H_RECERTIFY_METHOD_JAVA.html
 			// Enter the password from the command prompt, or automate it using the "yes" command
+			debug("Registration.crossCertify(...)");
 			if (reg.crossCertify(targetID, 
 				certPassword, // certifier password
 				"programmatically cross certified")) // comment field
 			{ 
-				System.out.println("Cross-certification succeeded"); 
+				log("Cross-certification succeeded"); 
 				
 				// Lookup the cross-certification document to check the user name
 				// I haven't found a better way to do this.
@@ -150,11 +166,18 @@ public class CrossCertifyNotesID
 			}
 		} 
 //		catch(NotesException e) {
-//			System.out.println( e.id + " " + e.text);
-//			e.printStackTrace();
+//			log( e.id + " " + e.text);
+//			log(e);
 //		}
 		finally {
-			NotesThread.stermThread();
+			try {
+				if (null != dt) { dt.recycle(); }
+				if (null != reg) { reg.recycle(); }
+			}
+			catch (NotesException ex) {
+				log("NotesException on recycle:  ");
+				log(ex);
+			}
 		}	
 	}
 	
@@ -172,19 +195,25 @@ public class CrossCertifyNotesID
 		View certView = null;
 		ViewEntryCollection entries = null;
 		try {
+			debug("Session.getDatabase()");
 			namesDatabase = session.getDatabase(server, "names.nsf", false);
 			if (null == namesDatabase || !namesDatabase.isOpen()) {
 				throw new Exception("Could not open names.nsf");
 			}
 			
+			debug("namesDatabase.getView()");
 			certView = namesDatabase.getView("($CrossCertByName)");
 			if (null == certView) {
 				throw new Exception("Could not open cross-certificate view.");
 			}
+			debug("certView.refresh()");
 			certView.refresh();   // avoid race conditions on view population
+			debug("certView.setAutoUpdate(false)");
 			certView.setAutoUpdate(false);  // avoid updates in the middle of iteration
 			
+			debug("certView.getAllEntries()");
 			entries = certView.getAllEntries();
+			debug("ViewEntryCollection.getFirstEntry()");
 			ViewEntry curEntry = entries.getFirstEntry();
 			String userName = null;
 			Date latestDate = null;
@@ -193,12 +222,15 @@ public class CrossCertifyNotesID
 				DateTime dateTime = null;
 				try {
 					if (curEntry.isDocument()) {
+						debug("ViewEntry.getDocument()");
 						curDoc = curEntry.getDocument();
+						debug("Document.getItemValueString(IssuedTo)");
 						String issuedTo = curDoc.getItemValueString("IssuedTo");
 						dateTime = curDoc.getLastModified();
 						
 						if (null == issuedTo || issuedTo.trim().isEmpty()) {
-							System.out.println("Found cross-certificate document " + curDoc.getUniversalID() + " with no value for IssuedTo.");
+							debug("Document.getUniversalID()");
+							log("Found cross-certificate document " + curDoc.getUniversalID() + " with no value for IssuedTo.");
 							// Skip
 						}
 						else if (null == latestDate || dateTime.toJavaDate().after(latestDate)) {
@@ -214,6 +246,7 @@ public class CrossCertifyNotesID
 				}
 				finally {
 					ViewEntry prevEntry = curEntry;
+					debug("ViewEntry.getNextEntry()");
 					curEntry = entries.getNextEntry();
 					
 					// cleanup
@@ -229,8 +262,8 @@ public class CrossCertifyNotesID
 			return userName;
 		}
 		catch (Exception ex) {
-			System.out.println("Failed to read last cross-certified user:  ");
-			ex.printStackTrace(System.out);
+			log("Failed to read last cross-certified user:  ");
+			log(ex);
 			return null;
 		}
 		finally {
@@ -246,86 +279,85 @@ public class CrossCertifyNotesID
 				}
 			}
 			catch (NotesException ex) {
-				System.out.println("Failed to recycle objects:  ");
-				ex.printStackTrace(System.out);
+				log("Failed to recycle objects:  ");
+				log(ex);
 			}
 		}
 	}
 	
 	/**
 	 * Add the given username to the {@link #AUTHORIZED_GROUP} group on the target server.
+	 * @param session  the Domino session to use.
 	 * @param username the username to add
 	 * @param server  the target server
 	 * @param userPassword  the password for the running user (not the above username).
 	 */
-	public static void addUserToAuthorizedGroup(String username, String server, String userPassword) throws NotesException, Exception {
-		System.out.println ("Adding user '" + username + "' to authorized user group (" + AUTHORIZED_GROUP + ").");
-		Session session = null;
+	public static void addUserToAuthorizedGroup(Session session, String username, String server, String userPassword) throws NotesException, Exception {
+		log ("Adding user '" + username + "' to authorized user group (" + AUTHORIZED_GROUP + ").");
 		Database namesDatabase = null;
 		View groupView = null;
 		Document groupDoc = null;
 		Vector members = null;
 		
 		try {
-			NotesThread.sinitThread();
-				
-			 // build the session arguments
-			String[] args = null;
-			System.out.println("Using default notesID path.");
-			args = new String[0];
-			String sessionServer = null; // local server
-			String sessionUser = null;  // default user
-			session = NotesFactory.createSession(sessionServer, args, sessionUser, userPassword);
 			
-			
+			debug("session.getDatabase(names.nsf)");
 			namesDatabase = session.getDatabase(server, "names.nsf", false);
 			if (null == namesDatabase || !namesDatabase.isOpen()) {
 				throw new Exception("Could not open names.nsf");
 			}
 			
+			debug("namesDatabase.getView(Groups)");
 			groupView = namesDatabase.getView("Groups");
 			if (null == groupView) {
 				throw new Exception("Could not open group view.");
 			}
 			
+			debug("groupView.getDocumentByKey('" + AUTHORIZED_GROUP + "'");
 			groupDoc = groupView.getDocumentByKey(AUTHORIZED_GROUP, true);
 			if (null == groupDoc) {
 				throw new Exception("Could not find expected group document:  '" + AUTHORIZED_GROUP + "'.");
 			}
 			
+			debug("groupDoc.getItemValue(Members)");
 			members = groupDoc.getItemValue("Members");
 			if (null == members || members.size() == 0 ||
 			    (members.size() == 1 && members.get(0).toString().trim().isEmpty())) { // default blank entry
 				members = new Vector();  // normalize 	
 			}
 			members.add(username);
+			debug("groupDoc.replaceItemValue(Members)");
 			groupDoc.replaceItemValue("Members", members);
 			
 			// computeWithForm - is this required?
+			debug("groupDoc.computeWithForm()");
 			groupDoc.computeWithForm(false, true);
 			
 			// save
+			debug("groupDoc.save()");
 			if (!groupDoc.save(true)) { // force the save
 				throw new Exception("Could not update group document.");
 			}
 			else {
-				System.out.println("Authorized group has been updated.");
+				log("Authorized group has been updated.");
 			}
 			
 			// force refresh of ($ServerAccess)
 			View refreshView = null;
 			String viewName = "($ServerAccess)";
 			try {
+				debug("namesDatabase.getView('" + viewName + "'");
 				refreshView = namesDatabase.getView(viewName);
 				if (null != refreshView) {
+					debug("refreshView.refresh()");
 					refreshView.refresh();
 				}
 				else {
-					System.out.println("Could not open view '" + viewName + "'.");
+					log("Could not open view '" + viewName + "'.");
 				}
 			}
 			catch (Exception ex) {
-				System.out.println("Could not refresh view '" + viewName + "'.");
+				log("Could not refresh view '" + viewName + "'.");
 			}
 			finally {
 				if (null != refreshView) { refreshView.recycle(); }
@@ -338,8 +370,6 @@ public class CrossCertifyNotesID
 			if (null != groupDoc) { groupDoc.recycle();}
 			if (null != groupView) { groupView.recycle();}
 			if (null != namesDatabase) { namesDatabase.recycle();}
-			if (null != session) { session.recycle(); }
-			NotesThread.stermThread();
 		}
 		
 	}
@@ -348,43 +378,37 @@ public class CrossCertifyNotesID
 	 * Add the given username to the server document, with enough access for DXL Importer and agents to work.
 	 * TODO:  This is massive overkill - it should be controlled by the group instead.   
 	 * However, the group was not working in our recent tests, so I'm using this as a workaround for now.'
+	 * @param session  the Domino session to use
 	 * @param username the username to add
 	 * @param server  the target server
-	 * @param userPassword  the password for the running user (not the above username).
 	 */
-	public static void addUserAsServerAdmin(String username, String server, String userPassword) throws NotesException, Exception {
-		System.out.println ("Adding user '" + username + "' to server document as authorized user.");
-		Session session = null;
+	public static void addUserAsServerAdmin(Session session, String username, String server) throws NotesException, Exception {
+		log ("Adding user '" + username + "' to server document as authorized user.");
 		Database namesDatabase = null;
 		View serverView = null;
 		Document serverDoc = null;
 		Name nameObj = null;
 		
 		try {
-			NotesThread.sinitThread();
-				
-			 // build the session arguments
-			String[] args = null;
-			System.out.println("Using default notesID path.");
-			args = new String[0];
-			String sessionServer = null; // local server
-			String sessionUser = null;  // default user
-			session = NotesFactory.createSession(sessionServer, args, sessionUser, userPassword);
 			
-			
+			debug("session.getDatabase(names.nsf)");
 			namesDatabase = session.getDatabase(server, "names.nsf", false);
 			if (null == namesDatabase || !namesDatabase.isOpen()) {
 				throw new Exception("Could not open names.nsf");
 			}
 			
+			debug("namesDatabase.getView($Servers)");
 			serverView = namesDatabase.getView("($Servers)");
 			if (null == serverView) {
 				throw new Exception("Could not open server view.");
 			}
 			
+			debug("session.createName()");
 			nameObj = session.createName(server);
+			debug("nameObj.getCanonical()");
 			String key = nameObj.getCanonical();
 			
+			debug("serverView.getDocumentByKey('" + key + "'");
 			serverDoc = serverView.getDocumentByKey(key, true);
 			if (null == serverDoc) {
 				throw new Exception("Could not find expected server document:  '" + server + "'.");
@@ -413,13 +437,13 @@ public class CrossCertifyNotesID
 			// save
 			if (!updated) {
 				// If the document is not updated, saving will trigger an error
-				System.out.println("No server document updates required.");
+				log("No server document updates required.");
 			}
 			else if (!serverDoc.save(true)) { // force the save
 				throw new Exception("Could not update server document.");
 			}
 			else {
-				System.out.println("Server doc has been updated.");
+				log("Server doc has been updated.");
 			}
 			
 			// also update the ACL to give the user access to configure the server.
@@ -430,8 +454,6 @@ public class CrossCertifyNotesID
 			if (null != serverDoc) { serverDoc.recycle();}
 			if (null != serverView) { serverView.recycle();}
 			if (null != namesDatabase) { namesDatabase.recycle();}
-			if (null != session) { session.recycle(); }
-			NotesThread.stermThread();
 		}
 		
 	}
@@ -455,6 +477,7 @@ public class CrossCertifyNotesID
 			
 			if (!members.contains(userName)) {
 				members.add(userName);
+				debug("serverDoc.replaceItemValue('" + itemName + "', " + members + ")");
 				serverDoc.replaceItemValue(itemName, members);
 				return true;
 			}
@@ -482,6 +505,7 @@ public class CrossCertifyNotesID
 		FileInputStream fis = null;
 		boolean updated = false;
 		try {
+			debug("namesDatabase.getACL()");
 			acl = database.getACL();
 			
 			String configFile = "/vagrant/dist-support/default_cross_certify_acl.json";
@@ -511,10 +535,11 @@ public class CrossCertifyNotesID
 			updated = updateACLFromConfig(acl, json, userName);
 			
 			if (!updated) {
-				System.out.println("No ACL updates required.");
+				log("No ACL updates required.");
 			}
 			else {
-				System.out.println("ACL updated and saved.");
+				log("ACL updated and saved.");
+				debug("acl.save()");
 				acl.save();
 			}
 			
@@ -539,10 +564,12 @@ public class CrossCertifyNotesID
 		boolean toSave = false;
 
 		try {
+			debug("acl.getEntry('" + userName + "')");
 			ACLEntry entry = acl.getEntry(userName);
 
 			// 1. get/create entry (default no access)
 			if (entry == null) {
+				debug("acl.createACLEntry('" + userName + "', LEVEL_NOACCESS)");
 				entry = acl.createACLEntry(userName, ACL.LEVEL_NOACCESS);
 				log(String.format("> ACL: new entry (%s)", userName));
 				toSave = true;
@@ -575,6 +602,7 @@ public class CrossCertifyNotesID
 				}
 
 				if (entry.getLevel() != level) {
+					debug("aclEntry.setLevel('" + sLevel + "'.");
 					entry.setLevel(level);
 					toSave = true;
 					log(String.format(">> ACLEntry: level (%s)", sLevel));
@@ -605,6 +633,7 @@ public class CrossCertifyNotesID
 				}
 
 				if (entry.getUserType() != type) {
+					debug("aclEntry.setUserType('" + type + "'.");
 					entry.setUserType(type);
 					log(String.format(">> ACLEntry: type (%s)", sType));
 					toSave = true;
@@ -613,7 +642,9 @@ public class CrossCertifyNotesID
 
 			// 4. canCreateDocuments
 			boolean canCreateDocuments = config.has("canCreateDocuments") && (Boolean) config.get("canCreateDocuments");
+			debug("aclEntry.isCanCreateDocuments()");
 			if (entry.isCanCreateDocuments() != canCreateDocuments) {
+				debug("aclEntry.setCanCreateDocuments('" + canCreateDocuments + "'.");
 				entry.setCanCreateDocuments(canCreateDocuments);
 				log(String.format(">> ACLEntry: setCanCreateDocuments (%b)", canCreateDocuments));
 				toSave = true;
@@ -622,7 +653,9 @@ public class CrossCertifyNotesID
 
 			// 5. canDeleteDocuments
 			boolean canDeleteDocuments = config.has("canDeleteDocuments") && (Boolean) config.get("canDeleteDocuments");
+			debug("aclEntry.isCanDeleteDocuments()");
 			if (entry.isCanDeleteDocuments() != canDeleteDocuments) {
+				debug("aclEntry.setCanDeleteDocuments('" + canCreateDocuments + "'.");
 				entry.setCanDeleteDocuments(canDeleteDocuments);
 				log(String.format(">> ACLEntry: canDeleteDocuments (%b)", canDeleteDocuments));
 				toSave = true;
@@ -630,7 +663,9 @@ public class CrossCertifyNotesID
 
 			// 6. canCreatePersonalAgent
 			boolean canCreatePersonalAgent = config.has("canCreatePersonalAgent") && (Boolean) config.get("canCreatePersonalAgent");
+			debug("aclEntry.isCanCreatePersonalAgent()");
 			if (entry.isCanCreatePersonalAgent() != canCreatePersonalAgent) {
+				debug("aclEntry.setCanCreatePersonalAgent('" + canCreatePersonalAgent + "'.");
 				entry.setCanCreatePersonalAgent(canCreatePersonalAgent);
 				log(String.format(">> ACLEntry: canCreatePersonalAgent (%b)", canCreatePersonalAgent));
 				toSave = true;
@@ -638,7 +673,9 @@ public class CrossCertifyNotesID
 
 			// 7. canCreatePersonalFolder
 			boolean canCreatePersonalFolder = config.has("canCreatePersonalFolder") && (Boolean) config.get("canCreatePersonalFolder");
+			debug("aclEntry.isCanCreatePersonalFolder()");
 			if (entry.isCanCreatePersonalFolder() != canCreatePersonalFolder) {
+				debug("aclEntry.setCanCreatePersonalFolder('" + canCreatePersonalFolder + "'.");
 				entry.setCanCreatePersonalFolder(canCreatePersonalFolder);
 				log(String.format(">> ACLEntry: canCreatePersonalFolder (%b)", canCreatePersonalFolder));
 				toSave = true;
@@ -646,7 +683,9 @@ public class CrossCertifyNotesID
 
 			// 8. canCreateSharedFolder
 			boolean canCreateSharedFolder = config.has("canCreateSharedFolder") && (Boolean) config.get("canCreateSharedFolder");
+			debug("aclEntry.isCanCreateSharedFolder()");
 			if (entry.isCanCreateSharedFolder() != canCreateSharedFolder) {
+				debug("aclEntry.setCanCreateSharedFolder('" + canCreateSharedFolder + "'.");
 				entry.setCanCreateSharedFolder(canCreateSharedFolder);
 				log(String.format("> ACL: entry canCreateSharedFolder (%b)", canCreateSharedFolder));
 				toSave = true;
@@ -654,7 +693,9 @@ public class CrossCertifyNotesID
 
 			// 9. canCreateLSOrJavaAgent
 			boolean canCreateLSOrJavaAgent = config.has("canCreateLSOrJavaAgent") && (Boolean) config.get("canCreateLSOrJavaAgent");
+			debug("aclEntry.isCanCreateLSOrJavaAgent()");
 			if (entry.isCanCreateLSOrJavaAgent() != canCreateLSOrJavaAgent) {
+				debug("aclEntry.setCanCreateLSOrJavaAgent('" + canCreateLSOrJavaAgent + "'.");
 				entry.setCanCreateLSOrJavaAgent(canCreateLSOrJavaAgent);
 				log(String.format(">> ACLEntry: canCreateLSOrJavaAgent (%b)", canCreateLSOrJavaAgent));
 				toSave = true;
@@ -662,7 +703,9 @@ public class CrossCertifyNotesID
 
 			// 10. isPublicReader
 			boolean isPublicReader = config.has("isPublicReader") && (Boolean) config.get("isPublicReader");
+			debug("aclEntry.isPublicReader()");
 			if (entry.isPublicReader() != isPublicReader) {
+				debug("aclEntry.setPublicReader('" + isPublicReader + "'.");
 				entry.setPublicReader(isPublicReader);
 				log(String.format(">> ACLEntry: isPublicReader (%b)", isPublicReader));
 				toSave = true;
@@ -670,7 +713,9 @@ public class CrossCertifyNotesID
 
 			// 11. isPublicWriter
 			boolean isPublicWriter = config.has("isPublicWriter") && (Boolean) config.get("isPublicWriter");
+			debug("aclEntry.isPublicWriter()");
 			if (entry.isPublicWriter() != isPublicWriter) {
+				debug("aclEntry.setPublicWriter('" + isPublicWriter + "'.");
 				entry.setPublicWriter(isPublicWriter);
 				log(String.format(">> ACLEntry: isPublicWriter (%b)", isPublicWriter));
 				toSave = true;
@@ -678,7 +723,9 @@ public class CrossCertifyNotesID
 
 			// 12. canReplicateOrCopyDocuments
 			boolean canReplicateOrCopyDocuments = config.has("canReplicateOrCopyDocuments") && (Boolean) config.get("canReplicateOrCopyDocuments");
+			debug("aclEntry.isCanReplicateOrCopyDocuments()");
 			if (entry.isCanReplicateOrCopyDocuments() != canReplicateOrCopyDocuments) {
+				debug("aclEntry.setCanReplicateOrCopyDocuments('" + canReplicateOrCopyDocuments + "'.");
 				entry.setCanReplicateOrCopyDocuments(canReplicateOrCopyDocuments);
 				log(String.format(">> ACLEntry: canReplicateOrCopyDocuments (%b)", canReplicateOrCopyDocuments));
 				toSave = true;
@@ -686,6 +733,7 @@ public class CrossCertifyNotesID
 
 			// 13. roles
 			if (config.has("roles")) {
+				debug("acl.getRoles()");
 				Vector<?> aclRoles = acl.getRoles();
 				log("Valid ACL Roles:  ");
 				for (Object aclRole : aclRoles) {
@@ -699,6 +747,7 @@ public class CrossCertifyNotesID
 						log(String.format(">> ACLEntry: role already added (%s)", role));
 					}
 					else if (aclRoles.contains(role)) {
+						debug("aclRole.enableRole('" + role + "'");
 						entry.enableRole(role);
 						log(String.format(">> ACLEntry: enableRole (%s)", role));
 						toSave = true;
@@ -715,10 +764,18 @@ public class CrossCertifyNotesID
 		return toSave;
 	}	
 	
+	
+	
 	protected static void log(String message) {
 		System.out.println(message);
 	} 	
-	protected static void log(Throwable e) {
-		e.printStackTrace(System.out);
+	protected static void debug(String message) {
+		final String debugPrefix = "    (debug)";
+		if (debugMode) {
+			log(debugPrefix + message);
+		}
+	} 	
+	protected static void log(Throwable t) {
+		t.printStackTrace(System.out);
 	} 	
 }
