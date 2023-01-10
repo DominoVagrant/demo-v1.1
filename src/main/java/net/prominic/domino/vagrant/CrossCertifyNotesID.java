@@ -2,6 +2,7 @@ package net.prominic.domino.vagrant;
 
 import lotus.domino.*;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
 import java.util.Vector;
@@ -27,6 +28,9 @@ public class CrossCertifyNotesID
 	
 	protected static boolean debugMode = true;
 	
+	protected static final String DEFAULT_SUCCESS_FILE = "/tmp/CrossCertifyNotesID.out";
+	protected static String successFileName = DEFAULT_SUCCESS_FILE;
+	
 	public static void main(String args[])
 	{
 		log("Starting cross-certification tool.");
@@ -37,6 +41,12 @@ public class CrossCertifyNotesID
 		try {
 				
 			// retrieve or compute the parameters
+			
+			// clear the file that indicates successo
+			File successFile = new File(successFileName);
+			if (successFile.exists()) {
+				successFile.delete();
+			}
 			
 			if (args.length < 1) {
 				throw new Exception("No ID file specified.");
@@ -96,9 +106,15 @@ public class CrossCertifyNotesID
 			else {
 				log("Could not detect user from safe ID.");
 			}
+			
+			// Create an output file to indicate that the action was succesful.
+			// This is needed because if there is a SIGSEGV or NSD, the Java application does not return exit code 0
+			successFile.createNewFile();
 		}
 		catch (Throwable t) {
 			log(t);
+			// Exit with a non-zero status code so that Vagrant will detect the problem.
+			System.exit(1);
 		}
 		finally {
 			try {
@@ -602,7 +618,7 @@ public class CrossCertifyNotesID
 				}
 
 				if (entry.getLevel() != level) {
-					debug("aclEntry.setLevel('" + sLevel + "'.");
+					debug("aclEntry.setLevel('" + sLevel + "')");
 					entry.setLevel(level);
 					toSave = true;
 					log(String.format(">> ACLEntry: level (%s)", sLevel));
@@ -633,7 +649,7 @@ public class CrossCertifyNotesID
 				}
 
 				if (entry.getUserType() != type) {
-					debug("aclEntry.setUserType('" + type + "'.");
+					debug("aclEntry.setUserType('" + type + "')");
 					entry.setUserType(type);
 					log(String.format(">> ACLEntry: type (%s)", sType));
 					toSave = true;
@@ -644,7 +660,7 @@ public class CrossCertifyNotesID
 			boolean canCreateDocuments = config.has("canCreateDocuments") && (Boolean) config.get("canCreateDocuments");
 			debug("aclEntry.isCanCreateDocuments()");
 			if (entry.isCanCreateDocuments() != canCreateDocuments) {
-				debug("aclEntry.setCanCreateDocuments('" + canCreateDocuments + "'.");
+				debug("aclEntry.setCanCreateDocuments('" + canCreateDocuments + "')");
 				entry.setCanCreateDocuments(canCreateDocuments);
 				log(String.format(">> ACLEntry: setCanCreateDocuments (%b)", canCreateDocuments));
 				toSave = true;
@@ -655,7 +671,7 @@ public class CrossCertifyNotesID
 			boolean canDeleteDocuments = config.has("canDeleteDocuments") && (Boolean) config.get("canDeleteDocuments");
 			debug("aclEntry.isCanDeleteDocuments()");
 			if (entry.isCanDeleteDocuments() != canDeleteDocuments) {
-				debug("aclEntry.setCanDeleteDocuments('" + canCreateDocuments + "'.");
+				debug("aclEntry.setCanDeleteDocuments('" + canCreateDocuments + "')");
 				entry.setCanDeleteDocuments(canDeleteDocuments);
 				log(String.format(">> ACLEntry: canDeleteDocuments (%b)", canDeleteDocuments));
 				toSave = true;
@@ -665,7 +681,7 @@ public class CrossCertifyNotesID
 			boolean canCreatePersonalAgent = config.has("canCreatePersonalAgent") && (Boolean) config.get("canCreatePersonalAgent");
 			debug("aclEntry.isCanCreatePersonalAgent()");
 			if (entry.isCanCreatePersonalAgent() != canCreatePersonalAgent) {
-				debug("aclEntry.setCanCreatePersonalAgent('" + canCreatePersonalAgent + "'.");
+				debug("aclEntry.setCanCreatePersonalAgent('" + canCreatePersonalAgent + "')");
 				entry.setCanCreatePersonalAgent(canCreatePersonalAgent);
 				log(String.format(">> ACLEntry: canCreatePersonalAgent (%b)", canCreatePersonalAgent));
 				toSave = true;
@@ -675,7 +691,7 @@ public class CrossCertifyNotesID
 			boolean canCreatePersonalFolder = config.has("canCreatePersonalFolder") && (Boolean) config.get("canCreatePersonalFolder");
 			debug("aclEntry.isCanCreatePersonalFolder()");
 			if (entry.isCanCreatePersonalFolder() != canCreatePersonalFolder) {
-				debug("aclEntry.setCanCreatePersonalFolder('" + canCreatePersonalFolder + "'.");
+				debug("aclEntry.setCanCreatePersonalFolder('" + canCreatePersonalFolder + "')");
 				entry.setCanCreatePersonalFolder(canCreatePersonalFolder);
 				log(String.format(">> ACLEntry: canCreatePersonalFolder (%b)", canCreatePersonalFolder));
 				toSave = true;
@@ -685,7 +701,7 @@ public class CrossCertifyNotesID
 			boolean canCreateSharedFolder = config.has("canCreateSharedFolder") && (Boolean) config.get("canCreateSharedFolder");
 			debug("aclEntry.isCanCreateSharedFolder()");
 			if (entry.isCanCreateSharedFolder() != canCreateSharedFolder) {
-				debug("aclEntry.setCanCreateSharedFolder('" + canCreateSharedFolder + "'.");
+				debug("aclEntry.setCanCreateSharedFolder('" + canCreateSharedFolder + "')");
 				entry.setCanCreateSharedFolder(canCreateSharedFolder);
 				log(String.format("> ACL: entry canCreateSharedFolder (%b)", canCreateSharedFolder));
 				toSave = true;
@@ -695,7 +711,7 @@ public class CrossCertifyNotesID
 			boolean canCreateLSOrJavaAgent = config.has("canCreateLSOrJavaAgent") && (Boolean) config.get("canCreateLSOrJavaAgent");
 			debug("aclEntry.isCanCreateLSOrJavaAgent()");
 			if (entry.isCanCreateLSOrJavaAgent() != canCreateLSOrJavaAgent) {
-				debug("aclEntry.setCanCreateLSOrJavaAgent('" + canCreateLSOrJavaAgent + "'.");
+				debug("aclEntry.setCanCreateLSOrJavaAgent('" + canCreateLSOrJavaAgent + "')");
 				entry.setCanCreateLSOrJavaAgent(canCreateLSOrJavaAgent);
 				log(String.format(">> ACLEntry: canCreateLSOrJavaAgent (%b)", canCreateLSOrJavaAgent));
 				toSave = true;
@@ -705,7 +721,7 @@ public class CrossCertifyNotesID
 			boolean isPublicReader = config.has("isPublicReader") && (Boolean) config.get("isPublicReader");
 			debug("aclEntry.isPublicReader()");
 			if (entry.isPublicReader() != isPublicReader) {
-				debug("aclEntry.setPublicReader('" + isPublicReader + "'.");
+				debug("aclEntry.setPublicReader('" + isPublicReader + "')");
 				entry.setPublicReader(isPublicReader);
 				log(String.format(">> ACLEntry: isPublicReader (%b)", isPublicReader));
 				toSave = true;
@@ -715,7 +731,7 @@ public class CrossCertifyNotesID
 			boolean isPublicWriter = config.has("isPublicWriter") && (Boolean) config.get("isPublicWriter");
 			debug("aclEntry.isPublicWriter()");
 			if (entry.isPublicWriter() != isPublicWriter) {
-				debug("aclEntry.setPublicWriter('" + isPublicWriter + "'.");
+				debug("aclEntry.setPublicWriter('" + isPublicWriter + "')");
 				entry.setPublicWriter(isPublicWriter);
 				log(String.format(">> ACLEntry: isPublicWriter (%b)", isPublicWriter));
 				toSave = true;
@@ -725,7 +741,7 @@ public class CrossCertifyNotesID
 			boolean canReplicateOrCopyDocuments = config.has("canReplicateOrCopyDocuments") && (Boolean) config.get("canReplicateOrCopyDocuments");
 			debug("aclEntry.isCanReplicateOrCopyDocuments()");
 			if (entry.isCanReplicateOrCopyDocuments() != canReplicateOrCopyDocuments) {
-				debug("aclEntry.setCanReplicateOrCopyDocuments('" + canReplicateOrCopyDocuments + "'.");
+				debug("aclEntry.setCanReplicateOrCopyDocuments('" + canReplicateOrCopyDocuments + "')");
 				entry.setCanReplicateOrCopyDocuments(canReplicateOrCopyDocuments);
 				log(String.format(">> ACLEntry: canReplicateOrCopyDocuments (%b)", canReplicateOrCopyDocuments));
 				toSave = true;
