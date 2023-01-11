@@ -5,6 +5,7 @@ import lotus.domino.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Vector;
 
 import org.json.JSONArray;
@@ -26,10 +27,16 @@ public class CrossCertifyNotesID
 {
 	public static final String AUTHORIZED_GROUP = "AutomaticallyCrossCertifiedUsers";
 	
-	protected static boolean debugMode = true;
 	
 	protected static final String DEFAULT_SUCCESS_FILE = "/tmp/CrossCertifyNotesID.out";
 	protected static String successFileName = DEFAULT_SUCCESS_FILE;
+	
+	protected static final String DEFAULT_PROPERTIES_FILE = "CrossCertifyNotesID.properties";
+	protected static String dataDirectory = null;
+	protected static String certID = null;
+	protected static String settingsFile = null;
+	protected static String aclTemplate = null;
+	protected static boolean debugMode = true;
 	
 	public static void main(String args[])
 	{
@@ -39,10 +46,11 @@ public class CrossCertifyNotesID
 		boolean threadInitialized = false;
 		Session session = null;
 		try {
-				
-			// retrieve or compute the parameters
 			
-			// clear the file that indicates successo
+			// load properties
+			loadProperties();
+			
+			// clear the file that indicates success
 			File successFile = new File(successFileName);
 			if (successFile.exists()) {
 				successFile.delete();
@@ -54,8 +62,6 @@ public class CrossCertifyNotesID
 			String targetID = args[0]; // TODO:  support more files
 			
 			// The JSON file used for Domino server setup can also be used for for this configuration
-			// TODO:  allow overrides from system properties?
-			String settingsFile = "/local/dominodata/setup.json";  // TODO:  make this more configurable?
 			fis = new FileInputStream(settingsFile);
 			JSONObject json = (JSONObject)new JSONTokener(fis).nextValue();
 			
@@ -67,7 +73,6 @@ public class CrossCertifyNotesID
 			String org = serverConfig.getString("domainName");
 			String server = name + "/" + org;
 			
-			String certID = "/local/dominodata/cert.id";  // Not in setup.json, so use convention
 			String certPassword = serverSetup.getJSONObject("org").getString("certifierPassword");
 			
 			// currently we are using the admin user for actions like this
@@ -107,6 +112,9 @@ public class CrossCertifyNotesID
 				log("Could not detect user from safe ID.");
 			}
 			
+			
+			log("");
+			log("## All operations completed successfully. ##");
 			// Create an output file to indicate that the action was succesful.
 			// This is needed because if there is a SIGSEGV or NSD, the Java application does not return exit code 0
 			successFile.createNewFile();
@@ -118,8 +126,14 @@ public class CrossCertifyNotesID
 		}
 		finally {
 			try {
-				if (null != session) { session.recycle(); }
-				if (threadInitialized) { NotesThread.stermThread(); }
+				if (null != session) { 
+					debug("session.recycle()");
+					session.recycle(); 
+				}
+				if (threadInitialized) { 
+					debug("NotesThread.stermThread()");
+					NotesThread.stermThread(); 
+				}
 				if (null != fis) { fis.close(); }
 			}
 			catch (Exception ex) {
@@ -128,6 +142,63 @@ public class CrossCertifyNotesID
 		}
 	}
 	
+	/**
+	 * Load the application properties, from the first available source here:<ul>
+	 *   <li>The file configured by the <code>app.properties.file</code> property (set with <code>-Dapp.properties.file=%file%</code>)</li>
+	 *   <li>The default file: <code>./CrossCertifyNotesID.properties</code>
+	 *   <li>Default values defined in this class.
+	 * </ul>
+	 */
+	public static void loadProperties() {
+		
+		String propertiesFileName = System.getProperty("app.properties.file");
+		debug ("propertiesFileName='" + propertiesFileName + "'.");
+		if (null == propertiesFileName || propertiesFileName.isEmpty()) {
+			propertiesFileName = DEFAULT_PROPERTIES_FILE;
+		}
+		
+		Properties properties = new Properties();
+		File propertiesFile = new File(propertiesFileName);
+		if (propertiesFile.exists()) {
+			log("Loading properties file '" + propertiesFile.getAbsolutePath() + "'.");
+			FileInputStream fis = null;
+			try {
+				fis = new FileInputStream(propertiesFile);
+				properties.load(fis);
+			}
+			catch (Exception ex) {
+				log("Could not load properties file '" + propertiesFile.getAbsolutePath() + "'.  Using defaults..." );
+			}
+			finally {
+				if (null != fis) { 
+					try {
+						fis.close(); 
+					}
+					catch (Exception ex) {
+						// ignore
+					}
+				}
+			}
+		}
+		else {
+			log("Properties file '" + propertiesFile.getAbsolutePath() + "' does not exist.  Using defaults...");
+		}
+		
+		// read the properties
+		dataDirectory = properties.getProperty("data.directory", "/local/notesdata");
+		settingsFile = properties.getProperty("domino.setup.file", dataDirectory + "/setup.json");
+		certID = properties.getProperty("cert.id.file", dataDirectory + "/cert.id");
+		aclTemplate = properties.getProperty("acl.template.file", "default_cross_certify_acl.json");
+		successFileName = properties.getProperty("output.file", DEFAULT_SUCCESS_FILE);
+		String debugStr = properties.getProperty("debug", "false");
+		if (null != debugStr && debugStr.equalsIgnoreCase("true")) {
+			debugMode = true;
+		}
+		else {
+			debugMode = false;
+		}
+		
+	}
 	
 	
 	
@@ -524,8 +595,7 @@ public class CrossCertifyNotesID
 			debug("namesDatabase.getACL()");
 			acl = database.getACL();
 			
-			String configFile = "/vagrant/dist-support/default_cross_certify_acl.json";
-			fis = new FileInputStream(configFile);
+			fis = new FileInputStream(aclTemplate);
 			JSONObject json = (JSONObject)new JSONTokener(fis).nextValue();
 /* Example JSON:
 {
@@ -777,6 +847,7 @@ public class CrossCertifyNotesID
 			log(e);
 		}
 
+		log("ACL Updates complete.");
 		return toSave;
 	}	
 	
