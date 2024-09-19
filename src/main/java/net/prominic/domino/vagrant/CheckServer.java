@@ -4,13 +4,17 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 import lotus.domino.ACL;
 import lotus.domino.Database;
 import lotus.domino.DbDirectory;
+import lotus.domino.DocumentCollection;
+import lotus.domino.Document;
 import lotus.domino.NotesException;
 import lotus.domino.NotesFactory;
 import lotus.domino.NotesThread;
 import lotus.domino.Session;
+import lotus.domino.View;
 
 /**
  * Check access to the indicated servers, and get the full server name, including the organization,
@@ -62,6 +66,7 @@ public class CheckServer {
 //                System.out.println("Successfully opened directory for server '" + serverName + "'.");
                 // NOTE:  This doesn't work because it only returns the common name
                 System.out.println("DbDirectory.getName():  '" + directory.getName() + "'");
+                String commonName = directory.getName();
                 database = directory.getFirstDatabase(DbDirectory.DATABASE);
                 if (null == database) {
                     System.out.println("Unable to open database for server '" + serverName + "'.");
@@ -71,6 +76,11 @@ public class CheckServer {
                     // NOTE:  This doesn't work because it only returns the common name
                     System.out.println("Database.getServer():  '" + database.getServer() + "'");
                 }
+                
+                
+                // lookup the server document using the common name
+                String lookupServerName = getFullServerName(session, serverName, commonName);
+                System.out.println("Lookup from names.nsf:  '" + lookupServerName + "'.");
 
             }
             
@@ -109,5 +119,56 @@ Domain name:            PNI
         }
     }
 
-
+    /**
+     * Given a common name retrieved from DbDirectory.getName or Database.getServerName, lookup the full, canonical name from names.nsf
+     * Requires at least reader access to names.nsf.
+     * 
+     * @param originalServerName  the name or address used to reach the server
+     * @param commonName  the common name
+     * @return  the canonical server name
+     * @throws NotesException  if an error occurred in the Notes API
+     * @throws Exception  if the database, view, or server document could not be opened
+     */
+    protected static String getFullServerName(Session session, String originalServerName, String commonName) throws NotesException, Exception {
+        Database namesDB = null;
+        View lookupView = null;
+        DocumentCollection matches = null;
+        Document serverDoc = null;
+       
+        try {
+        
+            namesDB = session.getDatabase(originalServerName, "names.nsf", false);  
+            
+            if (null == namesDB || !namesDB.isOpen()) {
+                // TODO:  support names.nsf at other locations?
+                throw new Exception("Could not open names.nsf.");
+            }
+            
+            lookupView = namesDB.getView("($Servers)");
+            if (null == lookupView) {
+                throw new Exception("Could not open server lookup view.");
+            }
+            
+            // The names in this view are cannonical, so I need to do a fuzzy search
+            // format  the lookup string to match the start of the name
+            matches = lookupView.getAllDocumentsByKey("CN=" + commonName + "/", false);
+            if (matches.getCount() < 1) {
+                throw new Exception("No matches for server name '" + commonName + "'.");
+            }
+            else if (matches.getCount() > 1) {
+                throw new Exception("Multiple mathches for server name '" + commonName + "'.");
+            }
+            else {
+                serverDoc = matches.getFirstDocument();
+                String serverName = serverDoc.getItemValueString("ServerName");
+                return serverName;
+            }
+        }
+        finally {
+            if (null != serverDoc) { serverDoc.recycle(); }
+            if (null != lookupView) { lookupView.recycle(); }
+            if (null != matches) { matches.recycle(); }
+            if (null != namesDB) { namesDB.recycle(); }
+        }
+    }
 }
