@@ -430,25 +430,9 @@ public class CrossCertifyNotesID
 			}
 			
 			// force refresh of ($ServerAccess)
-			View refreshView = null;
-			String viewName = "($ServerAccess)";
-			try {
-				debug("namesDatabase.getView('" + viewName + "'");
-				refreshView = namesDatabase.getView(viewName);
-				if (null != refreshView) {
-					debug("refreshView.refresh()");
-					refreshView.refresh();
-				}
-				else {
-					log("Could not open view '" + viewName + "'.");
-				}
-			}
-			catch (Exception ex) {
-				log("Could not refresh view '" + viewName + "'.");
-			}
-			finally {
-				if (null != refreshView) { refreshView.recycle(); }
-			}
+			refreshView("($VIMPeople)", namesDatabase, session);
+			refreshView("($VIMGroups)", namesDatabase, session);
+			refreshView("($ServerAccess)", namesDatabase, session);
 			
 			session.recycle(members);
 		}
@@ -850,6 +834,29 @@ public class CrossCertifyNotesID
 		log("ACL Updates complete.");
 		return toSave;
 	}	
+    
+    public static void refreshView(String viewName, Database database, Session session) throws NotesException, Exception {
+    		log("Refreshing view:  '" + viewName + "'");
+		View refreshView = null;
+		try {
+			debug("namesDatabase.getView('" + viewName + "'");
+			refreshView = database.getView(viewName);
+			if (null != refreshView) {
+				debug("refreshView.refresh()");
+				refreshView.refresh();
+			}
+			else {
+				log("Could not open view '" + viewName + "'.");
+			}
+		}
+		catch (Exception ex) {
+			log("Could not refresh view '" + viewName + "'.");
+			log (ex);
+		}
+		finally {
+			if (null != refreshView) { refreshView.recycle(); }
+		}
+    }
 	
 	
 	

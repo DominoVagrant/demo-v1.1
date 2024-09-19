@@ -8,20 +8,16 @@ plugins {
 }
 mainClassName = 'CheckNotesUser'
 
-String notesInstallation = '/Applications/HCL Notes.app/Contents/MacOS'
+String notesInstallation = project.findProperty('notesInstallation')
 if (!notesInstallation) {
-	throw new GradleException("Missing configured path for Notes installation.  Set notesInstallation in build.gradle.")
+	throw new GradleException("Missing configured path for Notes installation.  Set notesInstallation in gradle.properties.")
 }
-if (!(new File(notesInstallation).exists())) {
-	// try this as a Linux environment instead
-	notesInstallation = '/opt/hcl/domino/notes/latest/linux'
-}
-// TODO:  try Windows
-if (!(new File(notesInstallation).exists())) {
+else if (!(new File(notesInstallation).exists())) {
 	throw new GradleException("Invalid configured path for Notes installation ($notesInstallation).  Check notesInstallation in build.gradle.")
 }
 
-String notesJarPath = "$notesInstallation/jvm/lib/ext/Notes.jar"
+String notesJarExtDir = "$notesInstallation/jvm/lib/ext"
+String notesJarPath = "$notesJarExtDir/Notes.jar"
 String envPath = System.getenv('PATH')
 if (!envPath) {
 	logger.warn "Missing PATH environment variable."
@@ -33,13 +29,20 @@ if (notesInstallation.toLowerCase().startsWith('/applications/')) { // treat as 
 	if (!(new File(notesJarPath).exists())) {
 		// alternative location for macOS:  /Applications/HCL Notes.app/Contents/Resources/jvm/lib/ext/Notes.jar 
 		logger.info "Notes.jar not found at $notesJarPath"
-		notesJarPath = "$notesInstallation/../Resources/jvm/lib/ext/Notes.jar"
+		notesJarExtDir = "$notesInstallation/../Resources/jvm/lib/ext"
+		notesJarPath = "$notesJarExtDir/Notes.jar"
+	}
+	if (!(new File(notesJarPath).exists())) {
+		// alternative location for macOS and Notes 14:  /Applications/HCL Notes.app/Contents/Resources/ndext/Notes.jar 
+		logger.info "Notes.jar not found at $notesJarPath"
+		notesJarExtDir = "$notesInstallation/../Resources/ndext"
+		notesJarPath = "$notesJarExtDir/Notes.jar"
 	}
 	if (!(new File(notesJarPath).exists())) {
 		logger.info "Notes.jar not found at $notesJarPath"
 		throw new GradleException("ERROR: Could not find Notes.jar")
 	}
-	println("Notes JAR path:  $notesJarPath")
+	logger.info("Notes JAR path:  $notesJarPath")
 }
 else { // treat as Windows
 	// update PATH
